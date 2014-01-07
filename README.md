@@ -1,7 +1,7 @@
 gomahawk
 ========
 
-WIP implementation of the Network Protocol of tomahawk in golang
+WIP implementation of the [Network Protocol of tomahawk](http://wiki.tomahawk-player.org/index.php/Network_Protocol) in golang
 
 Install
 =======
@@ -22,7 +22,7 @@ Import
 Implement Tomahawk Interface
 ----------------------------
 
-look at examples folder
+look at [gomahawk_test.go](./gomahawk_test.go)
 
 
 Make new Gomahawk instance
