@@ -22,7 +22,7 @@ Import
 Implement Tomahawk Interface
 ----------------------------
 
-look at [gomahawk_test.go](./gomahawk_test.go)
+look at [example_test.go](./example_test.go)
 
 
 Make new Gomahawk instance
