@@ -1,7 +1,7 @@
 // Implementation of the network protocol of tomahawk
 //
 // Basic Usage :
-// 
+//
 // 1.Implement Tomahawk
 //
 // 2.Make newInstance of Gomahawk with NewGomahawk(TomahawkImpl)
@@ -10,25 +10,24 @@
 package gomahawk
 
 import (
-		"errors"
+	"errors"
 )
 
 var (
-
 	NotSupportedConnection = errors.New("Not Supported Connection")
 )
 
-// This is the Interface that represents a remote Tomahawk as well as the local. 
+// This is the Interface that represents a remote Tomahawk as well as the local.
 //
 // As user of the library this is the interface that needs to be implemented.
 type Tomahawk interface {
 	// Returns a human readable name of the instance. Can be empty string
 	Name() string
 	// Returns the uuid of the tomahawk instance as a string.
-	// 
+	//
 	// While implementing this interface you can use "" and Gomahawk will create a uuid based on the name
 	UUID() string
-	// Get the streamConnection associated with this tomahawk. 
+	// Get the streamConnection associated with this tomahawk.
 	//
 	// NotSupportedConnection is returned when this type of connection is not supported
 	// Others error mean that the connection was not successfully created
@@ -45,15 +44,15 @@ type StreamConnection interface {
 	// returns the size of each block
 	// this should be a constant for each instance
 	BlockSize() int
-	// Returns the blockIndex-ed block of file with the given id 
-	// 
+	// Returns the blockIndex-ed block of file with the given id
+	//
 	// For all but the last block it's required that the result is of length BlockSize
 	// And for any blockIndex > 0 this function should not panic or return a nil slice
 	Block(blockIndex int, id int64) []byte
 }
 
 // DBConnection are used to show the database to another tomahawk instance and to sync it afterwards
-// 
+//
 // The order in which the functions are called is the order in which the commands are ordered
 type DBConnection interface {
 	AddFiles(AddFilesCommand) error
@@ -62,8 +61,7 @@ type DBConnection interface {
 	RenamePlaylist(RenamePlaylistCommand) error
 	SetPlaylistRevision(SetPlaylistRevisionCommand) error
 	DeletePlaylist(DeletePlaylistCommand) error
-	Love(LoveCommand) error
-	UnLove(LoveCommand) error 
+	SocialAction(SocialActionCommand) error
 	Playing(PlayingCommand) error
 	StopPlaying(PlayingCommand) error
 	// request that all changes since the given UUID of a command are send.
@@ -90,16 +88,20 @@ type PlayingCommand interface {
 	TrackDuration() int
 	// how many seconds were played
 	PlayedSeconds() int
-	// the time as seconds since 1970-01-01 
+	// the time as seconds since 1970-01-01
 	Playtime() int64
 }
 
-type LoveCommand interface {
+// SocialAction is currently used for signaling love and unloving of a song.
+// if Action is equal to "Love" then Comment is should be either "true" or "false" -
+// respectfully this signals loving the giving song or unloving it
+type SocialActionCommand interface {
 	Command
 	Song
+	Action() string
+	Comment() string
 	Timestamp() int64
 }
-
 
 type AddFilesCommand interface {
 	Command
@@ -162,7 +164,7 @@ type File interface {
 	Artist() string
 	// The Album the song is from
 	Album() string
-	// The name of the Song 
+	// The name of the Song
 	Track() string
 	// The mimetype of the file
 	MimeType() string
@@ -178,6 +180,6 @@ type File interface {
 	Duration() int
 	// The bitrate of the song (can be 0)
 	Bitrate() int
-	// The size of the song in kbytes 
+	// The size of the song in kbytes
 	Size() int64
 }

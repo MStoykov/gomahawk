@@ -11,7 +11,7 @@ type tomahawkImpl struct {
 	name string
 }
 
-func (t *tomahawkImpl) Name() string{
+func (t *tomahawkImpl) Name() string {
 	return t.name
 }
 
@@ -28,7 +28,6 @@ func (t *tomahawkImpl) DBConnection() (DBConnection, error) {
 }
 
 type loggingDBConnection struct {
-
 }
 
 func (l *loggingDBConnection) AddFiles(command AddFilesCommand) error {
@@ -55,23 +54,19 @@ func (l *loggingDBConnection) DeletePlaylist(DeletePlaylistCommand) error {
 	return nil
 }
 
-func (l *loggingDBConnection) Love(LoveCommand) error {
+func (l *loggingDBConnection) SocialAction(SocialActionCommand) error {
 	return nil
 }
 
-func (l *loggingDBConnection) UnLove(LoveCommand) error  {
+func (l *loggingDBConnection) Playing(PlayingCommand) error {
 	return nil
 }
 
-func (l *loggingDBConnection) Playing(PlayingCommand) error{
+func (l *loggingDBConnection) StopPlaying(PlayingCommand) error {
 	return nil
 }
 
-func (l *loggingDBConnection) StopPlaying(PlayingCommand) error{
-	return nil
-}
-
-func (l *loggingDBConnection) FetchOps(string) error{
+func (l *loggingDBConnection) FetchOps(string) error {
 	return nil
 }
 func ExampleNewGomahawk() {
