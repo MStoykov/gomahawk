@@ -3,11 +3,39 @@ package gomahawk
 import (
 	"net"
 	"time"
-
 )
 
-// Gomahawk 
 type Gomahawk interface {
+	// Human readable Name
+	Name() string
+	// A new Connection from the given address is requested.
+	// If the returned value is true GomahawkServer will continue
+	// with the connection otherwise the connection will be closed.
+	ConnectionIsRequested(net.Addr) bool
+	// Found peer at the given address.
+	// Name could be empty.
+	// If the returned value is true GomahawkServer will try to connect to it.
+	NewTomahawkFound(addr net.Addr, name string) bool
+	// The given Tomahawk made DBConnection(by our request).
+	//
+	NewDBConnection(Tomahawk, DBConnection) error
+
+	// The given Tomahawk has requested a DBConnection. The returned DBConnection will get a call to FetchOps.
+	NewDBConnectionRequested(Tomahawk) (DBConnection, error)
+
+	// The given Tomahawk has requested a StreamConnection for file with the given uuid
+	// if the returned connection isn't nil it will be used to make the transactions
+	NewStreamConnectionRequested(t Tomahawk, uuid string) (StreamConnection, error)
+
+	// The given Tomahawk has opened StreamConnection to us.
+	//
+	// This StreamConnection is used for us to request blocks from them and is answer to
+	// previous call to Tomahawk.RequestStraamConnection
+	NewStreamConnection(Tomahawk, StreamConnection) error
+}
+
+// GomahawkServer
+type GomahawkServer interface {
 	// say that the instance needs to listen to the given port and ip.
 	// error is being returned if that is not possible
 	ListenTo(ip net.IP, port string) error
@@ -26,7 +54,6 @@ type Gomahawk interface {
 }
 
 // returns new instance of Gomahawk
-func NewGomahawk(t Tomahawk) (result Gomahawk, err error) {
+func NewGomahawkServer(t Gomahawk) (result GomahawkServer, err error) {
 	return
 }
-

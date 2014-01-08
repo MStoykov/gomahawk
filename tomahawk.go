@@ -2,11 +2,11 @@
 //
 // Basic Usage :
 //
-// 1.Implement Tomahawk
+// 1.Implement Gomahawk
 //
-// 2.Make newInstance of Gomahawk with NewGomahawk(TomahawkImpl)
+// 2.Make newInstance of GomahawkServer with NewGomahawkServer(GomahawkImpl)
 //
-// 3.Gomahawk.Start()
+// 3.GomahawkServer.Start()
 package gomahawk
 
 import (
@@ -17,44 +17,68 @@ var (
 	NotSupportedConnection = errors.New("Not Supported Connection")
 )
 
-// This is the Interface that represents a remote Tomahawk as well as the local.
-//
-// As user of the library this is the interface that needs to be implemented.
+// This is the Interface that represents a remote Tomahawk.
 type Tomahawk interface {
 	// Returns a human readable name of the instance. Can be empty string
 	Name() string
 	// Returns the uuid of the tomahawk instance as a string.
 	//
-	// While implementing this interface you can use "" and Gomahawk will create a uuid based on the name
+	// While implementing this interface you can use "" and a uuid based on the name
 	UUID() string
-	// Get the streamConnection associated with this tomahawk.
+	// Get a streamConnection for the file with the given uuid with this tomahawk.
 	//
 	// NotSupportedConnection is returned when this type of connection is not supported
 	// Others error mean that the connection was not successfully created
-	StreamConnection() (StreamConnection, error)
-	// Get the DBConnection associated with this tomahawk
+	RequestStreamConnection(uuid string) error
+	// A non blocking request for a DBConnection
+	// a call to NewDBConnection with the associated Tomahawk and the DBConnection will be made
+	// when and if the DBConnection is made
 	//
 	// NotSupportedConnection is returned when this type of connection is not supported
 	// Others error mean that the connection was not successfully created
-	DBConnection() (DBConnection, error)
+	RequestDBConnection() error
+
+	// Signals to the Tomahawk that there are changes to the db
+	// This may result in a db connection being requested
+	TriggerDBChanges()
 }
 
 // The StreamConnection is used to transfer files over the network
 type StreamConnection interface {
-	// returns the size of each block
+	// returns the ID of the file associated with this connection
+	FileID() int64
+	// returns the size of each block in bytes
+	//
 	// this should be a constant for each instance
 	BlockSize() int
-	// Returns the blockIndex-ed block of file with the given id
+	// returns a channel of []byte each of which represent a Block of the file being requested.
+	// The blockIndex is from where the streaming should begin.
 	//
-	// For all but the last block it's required that the result is of length BlockSize
-	// And for any blockIndex > 0 this function should not panic or return a nil slice
-	Block(blockIndex int, id int64) []byte
+	// When the channel is closed it means that the last block has been sent.
+	//
+	// Consequentive calls to this function invalidate previous channel, which will be closed.
+	StartFromBlock(blockIndex int) (<-chan []byte, error)
 }
 
-// DBConnection are used to show the database to another tomahawk instance and to sync it afterwards
-//
-// The order in which the functions are called is the order in which the commands are ordered
 type DBConnection interface {
+	// request that all changes since the given UUID of a command are send using the given FetchOpsMethod.
+	//
+	// You can not get or make more then one simultanious FetchOps.
+	//
+	// "" means all changes otherwise it is a uuid of previously transfered command
+	FetchOps(FetchOpsMethod, string) error
+}
+
+// This is interface represents ONE fetchop workflow
+//
+// Every call means a given command has been emmited. The commands are in order and the interface CAN NOT be used in parallel.
+//
+// Returning from a method means that the next command can be received. Multiple simultanius calls to the inteface may cause panic.
+//
+// None of the commands are guaranteed to be send before Close is called because of the way the protocol is designed.
+// And every last call is never send before Close is called. After Close or after any error returned from any function it should be considered that ALL
+// commands were not send.
+type FetchOpsMethod interface {
 	AddFiles(AddFilesCommand) error
 	DeleteFiles(DeleteFilesCommand) error
 	CreatePlaylist(CreatePlaylistCommand) error
@@ -64,9 +88,7 @@ type DBConnection interface {
 	SocialAction(SocialActionCommand) error
 	Playing(PlayingCommand) error
 	StopPlaying(PlayingCommand) error
-	// request that all changes since the given UUID of a command are send.
-	// "" means all changes
-	FetchOps(string) error
+	Close() error
 }
 
 type Command interface {
