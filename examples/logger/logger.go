@@ -1,4 +1,4 @@
-package logger
+package main
 
 import (
 	"log"
@@ -8,7 +8,31 @@ import (
 
 	"github.com/MStoykov/gomahawk"
 )
+type GomahawkImpl struct {
+	name string
+}
 
+func (g *GomahawkImpl) Name() string {
+	return g.name
+}
+func (g *GomahawkImpl) ConnectionIsRequested(addr net.Addr) bool {
+	return true
+}
+func (g *GomahawkImpl) NewTomahawkFound(addr net.Addr, name string) bool {
+	return true
+}
+func (g *GomahawkImpl) NewDBConnection(t gomahawk.Tomahawk, db gomahawk.DBConnection) error {
+	return nil
+}
+func (g *GomahawkImpl) NewDBConnectionRequested(t gomahawk.Tomahawk) (gomahawk.DBConnection, error) {
+	return nil, nil
+}
+func (g *GomahawkImpl) NewStreamConnectionRequested(t gomahawk.Tomahawk, uuid string) (gomahawk.StreamConnection, error) {
+	return nil, nil
+}
+func (g *GomahawkImpl) NewStreamConnection(t gomahawk.Tomahawk, sc gomahawk.StreamConnection) error {
+	return nil
+}
 type fetchOpsImpl struct {
 }
 
@@ -48,11 +72,9 @@ func (l *fetchOpsImpl) StopPlaying(gomahawk.PlayingCommand) error {
 	return nil
 }
 
-func ExampleNewGomahawkServer() {
-	t := gomahawkImpl{
-		"test",
-	}
-	g, err := gomahawk.NewGomahawkServer(&t)
+func main() {
+	t := new(GomahawkImpl)
+	g, err := gomahawk.NewGomahawkServer(t)
 	if err != nil {
 		log.Println(err)
 		return

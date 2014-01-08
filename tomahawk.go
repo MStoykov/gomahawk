@@ -11,6 +11,7 @@ package gomahawk
 
 import (
 	"errors"
+	"time"
 )
 
 var (
@@ -41,6 +42,9 @@ type Tomahawk interface {
 	// Signals to the Tomahawk that there are changes to the db
 	// This may result in a db connection being requested
 	TriggerDBChanges()
+
+	// The last time a ping message was received from this particular Tomahawk
+	LastPing() time.Time
 }
 
 // The StreamConnection is used to transfer files over the network
