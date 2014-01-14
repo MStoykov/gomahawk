@@ -22,7 +22,7 @@ Import
 Implement Tomahawk Interface
 ----------------------------
 
-look at [examples](./examples/)
+look at [examples](./examples/) for more examples of how to use the api
 
 
 Make new Gomahawk instance
@@ -30,7 +30,7 @@ Make new Gomahawk instance
 
 	g := NewGomahawkImpl()
 	gs := gomahawk.NewGomahawkServer(g)
-	err := gs.ListenTo(net.IPv4(192, 168, 1, 13), "50210") // Listen on 192.168.1.13 and the default tomahawk port
+	err := gs.ListenTo(net.ParseIP("192.168.1.13"), "50210") // Listen on 192.168.1.13 and the default tomahawk port
 	// error checking
 	gs.Start()
 
@@ -40,12 +40,12 @@ This is used to get the changes from the remote
 
 	var gs GomahawkServer
 	t := gs.Tomahawks()[0] // get the first of the connected Tomahawks
-	err := t.RequestDBConnection() 
+	err := t.RequestDBConnection(dbConnectionImpl)  // the dbConnectionImpl is the implemenation of the DBConnection
 	// error handleing
 	// the Gomahawk registered with the GomahawkServer gs will get call to 
 	// NewDBConnection with the Tomahawk instance and the given DBConnection can be used to initializa fetching
 	dbConnection.FetchOps(fetchOps, "") // get all changes 
-	// the methods on fetchOps will be called sequentually and at the end the Close() method will be called
+	// the methods on fetchOps will be called in order and at the end the Close() method will be called
  	// that signals that all current changes have been transmitted
  
 
