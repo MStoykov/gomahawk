@@ -24,6 +24,7 @@ func NewLogPlayBack(msg *Msg) (*LogPlayback, error) {
 	}
 	return l, nil
 }
+
 /*
 func (l *LogPlayback) GetSecsPlayed() int {
 	return l.SecsPlayed

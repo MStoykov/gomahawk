@@ -14,7 +14,7 @@ type Processor struct {
 	reader  *bufio.Reader
 }
 
-// Make new processor that will read the message from their 
+// Make new processor that will read the message from their
 // binary format from reader and send them on sync
 func NewProcessor(reader io.Reader, sync chan<- *Msg) *Processor {
 	p := Processor{

@@ -1,6 +1,5 @@
 package msg
 
-
 // Generic command
 type Command struct {
 	Command string `json:"command"` // "command" : "logplayback",

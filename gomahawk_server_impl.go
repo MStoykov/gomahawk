@@ -5,49 +5,19 @@ import (
 	"net"
 	"strconv"
 	"sync"
-	"time"
 
+	"github.com/MStoykov/gomahawk/udp"
 	gouuid "github.com/nu7hatch/gouuid"
 )
 
 type gomahawkServerImpl struct {
-	g            Gomahawk
-	uuid         *gouuid.UUID
-	advertPeriod time.Duration
-	advertTimer  *time.Timer
-	connection   net.Conn
-	addresses    []addr
-	tomahawks    []*tomahawkImpl
-	mutex        sync.Mutex
-}
-
-type addr struct {
-	ip   net.IP
-	port string
-}
-
-func (a addr) TCPAddr() (*net.TCPAddr, error) {
-	portI, err := strconv.Atoi(a.port)
-	if err != nil {
-		return nil, err
-	}
-
-	return &net.TCPAddr{
-		IP:   a.ip,
-		Port: portI,
-	}, nil
-}
-
-func (a addr) UDPAddr() (*net.UDPAddr, error) {
-	portI, err := strconv.Atoi(a.port)
-	if err != nil {
-		return nil, err
-	}
-
-	return &net.UDPAddr{
-		IP:   a.ip,
-		Port: portI,
-	}, nil
+	g           Gomahawk
+	uuid        *gouuid.UUID
+	advertisers []udp.Advertiser
+	listeners   []*tcpListener
+	tomahawks   []*tomahawkImpl
+	mutex       sync.Mutex
+	cm          *connectionManager
 }
 
 // returns new instance of Gomahawk
@@ -59,7 +29,7 @@ func NewGomahawkServer(g Gomahawk) (result GomahawkServer, err error) {
 		result = gs
 	}
 
-	//gs.connManager, err = gomahawk_net.NewConnectionManager()
+	gs.cm = newConnectionManager()
 
 	if err != nil {
 		log.Printf("error whie initializing ConnectionManager : %s", err)
@@ -96,7 +66,15 @@ func (g *gomahawkServerImpl) newConnectionCallback(conn *net.TCPConn) error {
 
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
-	c, err := newConnection(conn)
+
+	c, err := g.cm.newConnection(conn)
+
+	if err != nil {
+		conn.Close()
+		return nil
+
+	}
+	err = c.receiveOffer()
 	if err != nil {
 		conn.Close()
 		return nil
@@ -111,7 +89,7 @@ func (g *gomahawkServerImpl) newConnectionCallback(conn *net.TCPConn) error {
 			}
 		}
 	} else if c.NodeId != "" && c.ControlId == "" {
-		cc, err := newControlConnection(g.g, c, c.NodeId)
+		cc, err := newControlConnection(g.g, g.cm, c, c.NodeId)
 		if err != nil {
 			c.Close()
 			return err
@@ -122,68 +100,67 @@ func (g *gomahawkServerImpl) newConnectionCallback(conn *net.TCPConn) error {
 			return err
 		}
 
-		g.tomahawks = append(g.tomahawks, newTomahawk) // Race Condition
-
+		g.tomahawks = append(g.tomahawks, newTomahawk)
 	}
 
 	return nil
 }
 
-func (g *gomahawkServerImpl) ListenTo(ip net.IP, port string) error {
+func (g *gomahawkServerImpl) ListenTo(ip net.IP, port int) error {
 	log.Printf("%s.ListenTo(%s, %s)", g, ip, port)
-	newAddr := addr{ip, port}
-	g.addresses = append(g.addresses, newAddr) // RACE CONDITION
-	tcpAddr, err := newAddr.TCPAddr()
-	if err != nil {
-		return err
-	}
-	listener, err := newTCPListener(tcpAddr, g.newConnectionCallback)
+	listener, err := newTCPListener(ip, port, g.newConnectionCallback)
 	if err != nil {
 		return err
 	}
 	log.Println("new listener :", listener)
 
+	advertiser, err := udp.NewAdvertiser(ip, g.uuid.String(), g.Name(), strconv.Itoa(port))
+	if err != nil {
+		listener.Close()
+		return err
+	}
+	g.advertisers = append(g.advertisers, advertiser)
+	g.listeners = append(g.listeners, listener)
+
 	return nil
 }
 
-func (g *gomahawkServerImpl) AdvertEvery(period time.Duration) {
-	g.advertPeriod = period
-	if g.advertTimer != nil {
-		g.advertTimer.Reset(g.advertPeriod)
+func (g *gomahawkServerImpl) AdvertiseEvery(seconds int) {
+	for _, advertiser := range g.advertisers {
+		advertiser.AdvertiseEvery(seconds)
 	}
 }
 
 func (g *gomahawkServerImpl) Start() error {
 	log.Printf("%s.Start()", g)
-
-	g.advertTimer = time.AfterFunc(g.advertPeriod, func() {
-		defer g.advertTimer.Reset(g.advertPeriod)
-		err := g.AdvertNow()
-		if err != nil {
-			log.Println(err)
+	var err error
+	for _, advertiser := range g.advertisers {
+		if err = advertiser.Start(); err != nil {
+			return err
 		}
-	})
-	if g.advertPeriod > 0 {
-		g.AdvertNow()
 	}
 
+	for _, tcpListener := range g.listeners {
+		if err = tcpListener.Start(); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
 func (g *gomahawkServerImpl) GetTomahawks() []Tomahawk {
 	var result []Tomahawk = make([]Tomahawk, len(g.tomahawks))
 
+	for i, tomahawk := range g.tomahawks {
+		result[i] = tomahawk
+	}
 	return result
 }
 
-func (g *gomahawkServerImpl) AdvertNow() error {
-	//log.Printf("%s.AdvertNow()", g)
-	for _, addr := range g.addresses {
-		udpAddr, err := addr.UDPAddr()
-		if err != nil {
-			log.Println(err)
-		} else {
-			advert(udpAddr, g.uuid)
+func (g *gomahawkServerImpl) Advertise() (err error) {
+	for _, advertiser := range g.advertisers {
+		if err = advertiser.Advertise(); err != nil {
+			return err
 		}
 	}
 

@@ -66,8 +66,8 @@ func (t *Msg) IsSetup() bool {
 	return t.flag&SETUP == SETUP
 }
 
-// Returns the payload of the message as bytes.Buffer 
-func (t *Msg) PayloadBuf() *bytes.Buffer{
+// Returns the payload of the message as bytes.Buffer
+func (t *Msg) PayloadBuf() *bytes.Buffer {
 	return t.payload
 }
 
@@ -100,7 +100,7 @@ func (t *Msg) Uncompress() {
 
 // Compresses an uncompressed payload
 func (t *Msg) Compress() {
-	
+
 }
 
 // decodes message from it's binary representation

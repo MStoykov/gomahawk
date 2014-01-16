@@ -10,12 +10,12 @@ type SetPlaylistRevision struct {
 	OldRev       string     `json:"oldrev"`       // the old revision of the playlist
 	NewRev       string     `json:"newrev"`       // the new revision of the playlist
 	PlaylistGuid string     `json:"playlistguid"` // the Guid of the Playlist
-	AddEntries   []AddEntry `json:"addedentries"` // the entries to be added 
+	AddEntries   []AddEntry `json:"addedentries"` // the entries to be added
 	OrderedGuids []string   `json:"orderedguids"` // the ordered list Of All the songs in the playlist
 }
 
 type AddEntry struct {
-	Duration     int64     `json:"duration"`     // the duration of the song 
+	Duration     int64     `json:"duration"`     // the duration of the song
 	LastModified int64     `json:"lastmodified"` //
 	Guid         string    `json:"guid"`         // the guid of the song
 	Annotation   string    `json:"annotation"`   // a annotation ?
@@ -24,7 +24,7 @@ type AddEntry struct {
 
 type QueryType struct {
 	Song
-	Album    string `json:"album"`    // the album of the song 
+	Album    string `json:"album"`    // the album of the song
 	Duration int    `json:"duration"` // duration of the song (though it's -1 ) allthe time
 	Qid      string `json:"qid"`      // some ID
 }

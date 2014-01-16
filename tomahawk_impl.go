@@ -1,6 +1,5 @@
 package gomahawk
 
-
 type tomahawkImpl struct {
 	name string
 	uuid string
@@ -19,14 +18,14 @@ func (t *tomahawkImpl) UUID() string {
 //	return t.sendStreamRequest(id), nil
 //}
 
-func (t *tomahawkImpl) RequestDBConnection() error {
+func (t *tomahawkImpl) RequestDBConnection(DBConnection) error {
 	return t.sendDBSyncOffer()
 }
 
 func (t *tomahawkImpl) TriggerDBChanges() {
 }
 
-func newTomahawk (c *controlConnection) (*tomahawkImpl, error) {
+func newTomahawk(c *controlConnection) (*tomahawkImpl, error) {
 	t := new(tomahawkImpl)
 	t.controlConnection = c
 

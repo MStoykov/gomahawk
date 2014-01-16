@@ -10,7 +10,7 @@ import (
 	gouuid "github.com/nu7hatch/gouuid"
 )
 
-type controlConnection struct  {
+type controlConnection struct {
 	g Gomahawk
 	*connection
 	id        string
@@ -19,6 +19,7 @@ type controlConnection struct  {
 	idbConn   *dBConn
 	odbConn   *dBConn
 	dbsyncKey string
+	cm        *connectionManager
 }
 
 func (c *controlConnection) Name() string {
@@ -29,16 +30,21 @@ func (c *controlConnection) UUID() string {
 	return c.id
 }
 
-func (t *controlConnection) RequestStreamConnection(id int64)  (StreamConnection, error){
+func (t *controlConnection) RequestStreamConnection(id int64) (StreamConnection, error) {
 	offerMsg, err := msg.NewFileRequestOffer(id, t.id)
 	if err != nil {
 		return nil, err
 	}
-	sc, err := openNewStreamConnection(id, t.conn.LocalAddr(), t.conn.RemoteAddr(), t.connection,  offerMsg)
+	conn, err := t.cm.copyConnection(t.connection)
+	if err != nil {
+		return nil, err
+	}
 
-	log.Println("Got streamConnection")
-	log.Println(sc)
+	sc, err := openNewStreamConnection(id, conn, t.connection, offerMsg)
 
+	if err != nil {
+		return nil, err
+	}
 	return sc, nil
 }
 
@@ -46,20 +52,18 @@ func (c *controlConnection) RequestDBConnection(DBConnection) error {
 	return c.sendDBSyncOffer()
 }
 
-func (c *controlConnection) test2132() {
-}
-
-func (c *controlConnection) LastPing()  time.Time{
+func (c *controlConnection) LastPing() time.Time {
 	return c.lastPing
 
 }
-func (c *controlConnection) sendPing()  error {
+func (c *controlConnection) sendPing() error {
 	_, err := c.conn.Write(msg.MakePingMsg().Bytes())
 	return err
 }
 
-func newControlConnection(g Gomahawk, conn *connection, id string)  (*controlConnection, error){
+func newControlConnection(g Gomahawk, cm *connectionManager, conn *connection, id string) (*controlConnection, error) {
 	c := new(controlConnection)
+	c.cm = cm
 
 	c.g = g
 	c.connection = conn
@@ -78,7 +82,6 @@ func newControlConnection(g Gomahawk, conn *connection, id string)  (*controlCon
 	defer c.sendDBSyncOffer()
 
 	c.setupPingTimer()
-// controlConnection
 
 	return c, nil
 }
@@ -109,14 +112,12 @@ func (c *controlConnection) AddConnection(conn *connection) error {
 
 	c.idbConn = dbConn
 
-	twin , err := c.g.NewDBConnection(c, c.idbConn)
+	twin, err := c.g.NewDBConnection(c, c.idbConn)
 	log.Println(twin)
 	if err != nil {
 		dbConn.Close()
-		return err 
+		return err
 	}
-
-
 
 	return nil
 }
@@ -140,17 +141,23 @@ func (c *controlConnection) sendDBSyncOffer() error {
 
 func (c *controlConnection) handleMsg(m *msg.Msg) error {
 	if m.IsPing() {
-		//log.Println("pinged")
 		c.lastPing = time.Now()
-		return nil // MAYBE MISTAKE
+		return nil
 	}
+
 	dbsyncOffer, err := msg.ParseDBSyncOffer(m)
 	if err == nil {
 		log.Println("we got offer for DBSYNC ", dbsyncOffer)
-		c.odbConn, err = openNewDBConn(dbsyncOffer, c.conn.LocalAddr(), c.conn.RemoteAddr(), c.id)
+		conn, err := c.cm.copyConnection(c.connection)
 		if err != nil {
 			return err
 		}
+
+		c.odbConn, err = openNewDBConn(dbsyncOffer, conn, c.id)
+		if err != nil {
+			return err
+		}
+
 		dbConn, err := c.g.NewDBConnectionRequested(c, c.odbConn)
 		if err != nil {
 			log.Println(err)
@@ -160,6 +167,7 @@ func (c *controlConnection) handleMsg(m *msg.Msg) error {
 		// DO something more incase of error
 		return err
 	}
+
 	log.Println("unhandled m :", m)
 	// parse
 	return nil

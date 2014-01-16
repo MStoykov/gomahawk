@@ -11,14 +11,15 @@
 package gomahawk
 
 import (
-	"net"
-	"time"
 	"errors"
+	"net"
+	//"time"
 )
 
 var (
 	NotSupportedConnection = errors.New("Not Supported Connection")
 )
+
 type Gomahawk interface {
 	// Human readable Name
 	Name() string
@@ -50,16 +51,16 @@ type Gomahawk interface {
 type GomahawkServer interface {
 	// Listen to the given port and ip. The default port is 50210
 	// error is being returned if that is not possible
-	ListenTo(ip net.IP, port string) error
+	ListenTo(ip net.IP, port int) error
 	// start the listening and advertising
 	Start() error
 	// says to advertise this instance
 	// (this is regardless of advertisement period set by AdvertEvery)
-	AdvertNow() error
+	Advertise() error
 	// Sets a period of time that the advert will be sent.
 	//
 	// By default 0 which means never
-	AdvertEvery(period time.Duration)
+	AdvertiseEvery(seconds int)
 	// retuns the name. This is the same as the Gomahawk.Name() for the Gomahawk instance
 	// given to GomahawkServer
 	Name() string

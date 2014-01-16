@@ -8,13 +8,13 @@ import (
 type SocialAction struct {
 	Song
 	Command
-	Action    string `json:"action"`    
+	Action string `json:"action"`
 	// String representation of the action. "Love" is the only one
 	// currently
-	Comment   string `json:"comment"` 
+	Comment string `json:"comment"`
 	// comment to the action "true" means Love a song "false" Unlove when
 	// Action == Love
-	Timestamp int64  `json:"timestamp"` // timestamp of the action
+	Timestamp int64 `json:"timestamp"` // timestamp of the action
 }
 
 /*

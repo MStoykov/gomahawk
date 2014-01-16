@@ -1,8 +1,8 @@
 package msg
 
-// A File 
+// A File
 type File struct {
-	Id  int64    `json:"id"`  // the ID of the file
+	Id  int64  `json:"id"`  // the ID of the file
 	Url string `json:"url"` // currently only a string representation of the ID
 	Song
 	Album    string `json:"album"`    // string representation of the Album name

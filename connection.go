@@ -3,13 +3,14 @@ package gomahawk
 import (
 	"bytes"
 	"errors"
-	msg "github.com/MStoykov/gomahawk/msg"
+	"io"
 	"log"
-	"net"
+
+	msg "github.com/MStoykov/gomahawk/msg"
 )
 
 type connection struct {
-	conn      *net.TCPConn
+	conn      io.ReadWriteCloser
 	processor *msg.Processor
 	sync      <-chan *msg.Msg
 	*msg.OfferMsg
@@ -21,66 +22,36 @@ func (c *connection) setupProcessor() {
 	c.processor = msg.NewProcessor(c.conn, sync)
 }
 
-func newConnection(conn *net.TCPConn) (*connection, error) {
-	c := new(connection)
-
-	c.conn = conn
-
-	c.setupProcessor()
-
+func (c *connection) receiveOffer() error {
 	m := <-c.sync
 	offer, err := msg.ParseOffer(m)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	c.OfferMsg = offer
 	if err := c.sendversionCheck(); err != nil {
 		log.Println("versionCheck sending failed for ", offer)
 
 		c.conn.Close()
-		return nil, err
+		return err
 	}
 
 	m = <-c.sync
 	if !m.IsSetup() || !bytes.Equal(m.Payload(), []byte("ok")) {
-		log.Println ("the version was not ok with the remote for ", offer)
+		log.Println("the version was not ok with the remote for ", offer)
 		c.conn.Close()
 
-		return nil, errors.New("Setup failed - wrong version of protocol")
+		return errors.New("Setup failed - wrong version of protocol")
 	}
 
-
-	return c, nil
+	return nil
 }
 
-func openNewConnection(local net.Addr, remote net.Addr, offer *msg.Msg) (*connection, error) {
-	tcpLAddr, err := net.ResolveTCPAddr("tcp", local.String())
-	if err != nil {
-		log.Println("error while resolving local tcp addr", err)
-		return nil, err
-	}
-	tcpLAddr.Port = 0 // we need to get new port and we don't care which one it is :)
-	tcpRAddr, err := net.ResolveTCPAddr("tcp", remote.String())
-	if err != nil {
-		log.Println("error while resolving remote tcp addr", err)
-		return nil, err
-	}
-	tcpRAddr.Port = 50210 // hardcoded
-
-	conn, err := net.DialTCP("tcp", tcpLAddr, tcpRAddr)
-	if err != nil {
-		log.Println("couldn't dial remote ", remote, "from local", local)
-		return nil, err
-	}
-
-	c := new(connection)
-	c.conn = conn
-	c.setupProcessor()
-	
-	_, err = c.conn.Write(offer.Bytes())
+func (c *connection) sendOffer(offer *msg.Msg) error {
+	_, err := c.conn.Write(offer.Bytes())
 	if err != nil {
 		c.conn.Close()
-		return nil, err
+		return err
 	}
 
 	m := <-c.sync
@@ -88,17 +59,17 @@ func openNewConnection(local net.Addr, remote net.Addr, offer *msg.Msg) (*connec
 		log.Println("We didn't get versionCheck")
 		log.Println("We got", m)
 		c.conn.Close()
-		return nil, errors.New("VersionCheck failed")
+		return errors.New("VersionCheck failed")
 	}
 
 	m = msg.NewMsg(bytes.NewBufferString("ok"), msg.SETUP)
 
 	_, err = c.conn.Write(m.Bytes())
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return c, nil
+	return nil
 }
 
 func (c *connection) Close() error {

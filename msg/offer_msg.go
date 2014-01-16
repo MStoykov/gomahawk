@@ -1,8 +1,8 @@
 package msg
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"strconv"
 )
 
@@ -29,7 +29,7 @@ func ParseOffer(msg *Msg) (*OfferMsg, error) {
 // Make new Msg that contains a Request for a File with the given id from the
 // given control id
 func NewFileRequestOffer(fileId int64, controlid string) (*Msg, error) {
-	o := &OfferMsg {
+	o := &OfferMsg{
 		"accept-offer",
 		"FILE_REQUEST_KEY:" + strconv.FormatInt(fileId, 10),
 		"",

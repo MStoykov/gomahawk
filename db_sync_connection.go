@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"log"
-	"net"
 	"regexp"
 
 	msg "github.com/MStoykov/gomahawk/msg"
@@ -23,7 +22,6 @@ type fetchOpsMethodMsg struct {
 }
 
 var re = regexp.MustCompile(`"command"\s*:\s*"([^"]+)"`)
-
 
 func (d *dBConn) Trigger() error {
 	return nil
@@ -81,30 +79,11 @@ func newDBConn(conn *secondaryConnection) (*dBConn, error) {
 	return d, nil
 }
 
-func openNewDBConn(offer *msg.DBsyncOffer, lAddr net.Addr, rAddr net.Addr, controlid string) (*dBConn, error) {
+func openNewDBConn(offer *msg.DBsyncOffer, conn *connection, controlid string) (*dBConn, error) {
 	log.Println("OpenNewDBConn")
 	d := new(dBConn)
 	d.offer = offer
-	tcpLAddr, err := net.ResolveTCPAddr("tcp", lAddr.String())
-	if err != nil {
-		log.Println("error while resolving local tcp addr", err)
-		return nil, err
-	}
-	tcpLAddr.Port = 0 // we need to get new port and we don't care which one it is :)
-	tcpRAddr, err := net.ResolveTCPAddr("tcp", rAddr.String())
-	if err != nil {
-		log.Println("error while resolving remote tcp addr", err)
-		return nil, err
-	}
-	tcpRAddr.Port = 50210 // hardcoded
-
-	tcpConn, err := net.DialTCP("tcp", tcpLAddr, tcpRAddr)
-	log.Printf(`net.DialTCP("tcp", %s, %s)`, tcpLAddr, tcpRAddr)
-	if err != nil {
-		log.Println("error while dialing tcp connection")
-		return nil, err
-	}
-	d.conn = tcpConn
+	d.connection = conn
 
 	dbsecondaryoffer := secondaryOffer{
 		"accept-offer",
@@ -166,13 +145,13 @@ func (d *dBConn) FetchOps(fom msg.FetchOpsMethod, id string) error {
 }
 
 func (d *dBConn) handleMsg(m *msg.Msg) error {
-	
+
 	offer, err := msg.ParseDBSyncOffer(m)
 	if err != nil {
 		return err
 	}
 	log.Println(offer)
-	
+
 	// parse
 	return nil
 }

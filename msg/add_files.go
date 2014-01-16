@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 )
 
-// The AddFiles command says that the files 
+// The AddFiles command says that the files
 // listed have been added in this command
 type AddFiles struct {
 	Command
