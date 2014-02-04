@@ -8,6 +8,10 @@ import (
 	"log"
 )
 
+const (
+	bufferSize = 512
+)
+
 type Processor struct {
 	sync    chan<- *Msg
 	current *Msg
@@ -27,7 +31,9 @@ func NewProcessor(reader io.Reader, sync chan<- *Msg) *Processor {
 		for {
 			err := p.process()
 			if err != nil {
-				log.Println("error in process", err)
+				if err != io.EOF {
+					log.Println("error in process", err)
+				}
 				return
 			}
 		}
@@ -35,16 +41,16 @@ func NewProcessor(reader io.Reader, sync chan<- *Msg) *Processor {
 	return &p
 }
 
-func readExactly(r *bufio.Reader, size uint32) (*bytes.Buffer, error) {
+func readExactly(r io.Reader, size int) (*bytes.Buffer, error) {
 	var buf *bytes.Buffer
 	buf = new(bytes.Buffer)
 
-	buf.Grow(int(size)) // we don't actually want to reallocate every 10 calls
+	buf.Grow(size) // we don't actually want to reallocate every 10 calls
 
-	var b [512]byte
-	for newSize := size; newSize != 0; newSize = size - uint32(buf.Len()) {
-		if newSize > 512 {
-			newSize = 512
+	var b [bufferSize]byte
+	for newSize := size; newSize != 0; newSize = size - buf.Len() {
+		if newSize > bufferSize {
+			newSize = bufferSize
 		}
 		newSize, err := r.Read(b[:newSize])
 		if err != nil {
@@ -73,13 +79,8 @@ func (p *Processor) process() error {
 	if err != nil {
 		panic("error while parsing the size of a packet")
 	}
-	p.current.payload, err = readExactly(p.reader, p.current.size+1)
+	p.current.payload, err = readExactly(p.reader, int(p.current.size) + 1)
 	if err != nil {
-		if err != io.EOF {
-			log.Println("Didn't manage to read size")
-		} else {
-			log.Println("EOF")
-		}
 		return err
 	}
 	p.current.flag, err = p.current.payload.ReadByte()
