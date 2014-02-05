@@ -1,0 +1,21 @@
+{
+   "command": "addfiles",
+   "guid": "7ea0b94a-498f-4c1a-a9ac-afb6b11d3a3d",
+   "files": [
+     {
+       "id": 1, 
+       "url": "1", 
+       "artist": "Bloc Party", 
+       "album": "Banquet", 
+       "track": "Banquet", 
+       "mimetype": "audio/mpeg", 
+       "hash": "", 
+       "year": 2002, 
+       "albumpos": 1, 
+       "mtime": 1261233412, 
+       "duration": 201, 
+       "bitrate": 128, 
+       "size": 3229824
+     } 
+  ]
+}
