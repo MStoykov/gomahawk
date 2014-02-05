@@ -79,7 +79,7 @@ func (p *Processor) process() error {
 	if err != nil {
 		panic("error while parsing the size of a packet")
 	}
-	p.current.payload, err = readExactly(p.reader, int(p.current.size) + 1)
+	p.current.payload, err = readExactly(p.reader, int(p.current.size)+1)
 	if err != nil {
 		return err
 	}

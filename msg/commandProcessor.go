@@ -1,4 +1,4 @@
-package msg 
+package msg
 
 import (
 	"errors"
@@ -8,19 +8,19 @@ import (
 
 var commandRe = regexp.MustCompile(`"command"\s*:\s*"([^"]+)"`)
 
-type CommandParser func (*Msg) (Command, error)
+type CommandParser func(*Msg) (Command, error)
 
 type CommandProcessor struct {
-	registered  map[string]CommandParser
+	registered map[string]CommandParser
 }
 
-func NewCommandProcessor() *CommandProcessor  {
+func NewCommandProcessor() *CommandProcessor {
 	c := new(CommandProcessor)
 
 	c.registered = make(map[string]CommandParser)
 
-	c.registered["addfiles"]    = func(m *Msg) (Command, error) { return NewAddFiles(m)}
-	c.registered["logplayback"] = func(m *Msg) (Command, error) { return NewLogPlayBack(m)}
+	c.registered["addfiles"] = func(m *Msg) (Command, error) { return NewAddFiles(m) }
+	c.registered["logplayback"] = func(m *Msg) (Command, error) { return NewLogPlayBack(m) }
 
 	return c
 }

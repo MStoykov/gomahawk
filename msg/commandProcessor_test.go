@@ -11,9 +11,9 @@ import (
 
 var _ = Describe("CommandProcessor", func() {
 	var (
-		processor *CommandProcessor
+		processor       *CommandProcessor
 		addfilesJSON, _ = ioutil.ReadFile("./fixtures/addfiles.json")
-		addfilesMSG = NewMsg(bytes.NewBuffer(addfilesJSON), JSON | DBOP)
+		addfilesMSG     = NewMsg(bytes.NewBuffer(addfilesJSON), JSON|DBOP)
 	)
 
 	BeforeEach(func() {
@@ -21,7 +21,6 @@ var _ = Describe("CommandProcessor", func() {
 	})
 
 	Describe("Processor", func() {
-
 
 		It("parses AddFiles", func() {
 			command, err := processor.ParseCommand(addfilesMSG)

@@ -2,7 +2,7 @@ package msg
 
 type Command interface {
 	GetCommand() string
-	GetGuid()    string
+	GetGuid() string
 }
 
 // This is interface represents ONE fetchop workflow

@@ -6,7 +6,6 @@ type command struct {
 	Guid    string `json:"guid"`    // "guid" : "33a4a23d-afc4-4b48-9279-b3fd9dff6893",
 }
 
-
 func (c *command) GetCommand() string {
 	return c.Command
 }

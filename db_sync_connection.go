@@ -3,9 +3,9 @@ package gomahawk
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"log"
 	"regexp"
-	"errors"
 
 	msg "github.com/MStoykov/gomahawk/msg"
 )
@@ -59,9 +59,9 @@ func (d *dBConn) sendFetchOps(id string) error {
 
 type dBConn struct {
 	*secondaryConnection
-	offer *msg.DBsyncOffer
-	fom   msg.FetchOpsMethod
-	commandProcessor *msg.CommandProcessor 
+	offer            *msg.DBsyncOffer
+	fom              msg.FetchOpsMethod
+	commandProcessor *msg.CommandProcessor
 }
 
 func newDBConn(conn *secondaryConnection) (*dBConn, error) {
@@ -144,10 +144,10 @@ func (d *dBConn) handleMsg(m *msg.Msg) error {
 			err = d.fom.SendCommand(command)
 
 			if !m.IsFragment() {
-				return 	d.fom.Close()
+				return d.fom.Close()
 			}
 
-			return  err
+			return err
 		} else {
 			return errors.New("Got DBOP but no FetchOpsMethod")
 		}
