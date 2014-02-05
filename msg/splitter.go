@@ -37,21 +37,21 @@ func FilterCommands(c <-chan *Msg, others chan<- *Msg, f FetchOpsMethod) error {
 				return err
 			}
 
-			f.AddFiles(addFiles)
+			f.SendCommand(addFiles)
 		case "deletefiles":
 			deleteFiles, err := NewDeleteFiles(m)
 			if err != nil {
 				return err
 			}
 
-			f.DeleteFiles(deleteFiles)
+			f.SendCommand(deleteFiles)
 		case "socialaction":
 			socialAction, err := NewSocialAction(m)
 			if err != nil {
 				return err
 			}
 
-			f.SocialAction(socialAction)
+			f.SendCommand(socialAction)
 
 		case "logplayback":
 			logPlayback, err := NewLogPlayBack(m)
@@ -59,7 +59,7 @@ func FilterCommands(c <-chan *Msg, others chan<- *Msg, f FetchOpsMethod) error {
 				return err
 			}
 
-			f.LogPlayback(logPlayback)
+			f.SendCommand(logPlayback)
 
 		default:
 			//log.Println(m)

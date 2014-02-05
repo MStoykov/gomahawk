@@ -7,7 +7,7 @@ import (
 // A social Action command
 type SocialAction struct {
 	Song
-	Command
+	command
 	Action string `json:"action"`
 	// String representation of the action. "Love" is the only one
 	// currently

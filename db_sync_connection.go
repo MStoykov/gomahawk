@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"regexp"
+	"errors"
 
 	msg "github.com/MStoykov/gomahawk/msg"
 )
@@ -60,21 +61,22 @@ type dBConn struct {
 	*secondaryConnection
 	offer *msg.DBsyncOffer
 	fom   msg.FetchOpsMethod
+	commandProcessor *msg.CommandProcessor 
 }
 
 func newDBConn(conn *secondaryConnection) (*dBConn, error) {
 	d := new(dBConn)
 	d.secondaryConnection = conn
+	d.commandProcessor = msg.NewCommandProcessor()
 
-	//	go func() {
-	//		for m := range d.sync {
-	//			err := d.handleMsg(m)
-	//			if err != nil {
-	//				log.Println(err)
-	//				return
-	//			}
-	//		}
-	//	}()
+	go func() {
+		for m := range d.sync {
+			err := d.handleMsg(m)
+			if err != nil {
+				log.Println(err)
+			}
+		}
+	}()
 
 	return d, nil
 }
@@ -84,6 +86,7 @@ func openNewDBConn(offer *msg.DBsyncOffer, conn *connection, controlid string) (
 	d := new(dBConn)
 	d.offer = offer
 	d.connection = conn
+	d.commandProcessor = msg.NewCommandProcessor()
 
 	dbsecondaryoffer := secondaryOffer{
 		"accept-offer",
@@ -124,30 +127,36 @@ func openNewDBConn(offer *msg.DBsyncOffer, conn *connection, controlid string) (
 
 func (d *dBConn) FetchOps(fom msg.FetchOpsMethod, id string) error {
 	d.fom = fom
-	d.sendFetchOps(id)
-	go func() {
-		others := make(chan *msg.Msg)
-		go func() {
-			for m := range others {
-				d.handleMsg(m)
-			}
-		}()
-		err := msg.FilterCommands(d.sync, others, d.fom)
-		if err != nil {
-			log.Println("error from FilterCommands", err)
-		} else {
-			log.Println("no error on FilterCommands")
-		}
-
-		d.fom = nil
-	}()
-	return nil
+	return d.sendFetchOps(id)
 }
 
 func (d *dBConn) handleMsg(m *msg.Msg) error {
 
+	if m.IsDBOP() {
+		log.Println("got a DBOP")
+		if d.fom != nil {
+			command, err := d.commandProcessor.ParseCommand(m)
+
+			if err != nil {
+				return err
+			}
+
+			err = d.fom.SendCommand(command)
+
+			if !m.IsFragment() {
+				return 	d.fom.Close()
+			}
+
+			return  err
+		} else {
+			return errors.New("Got DBOP but no FetchOpsMethod")
+		}
+
+	}
+
 	offer, err := msg.ParseDBSyncOffer(m)
 	if err != nil {
+		log.Println(m)
 		return err
 	}
 	log.Println(offer)

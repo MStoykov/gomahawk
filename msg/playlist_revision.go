@@ -6,7 +6,7 @@ package msg
 // the OrderedGuids is the order guids of all the song in the new revision of
 // the playlist. To remove a song you simply skip it in the OrderedGuids
 type SetPlaylistRevision struct {
-	Command
+	command
 	OldRev       string     `json:"oldrev"`       // the old revision of the playlist
 	NewRev       string     `json:"newrev"`       // the new revision of the playlist
 	PlaylistGuid string     `json:"playlistguid"` // the Guid of the Playlist

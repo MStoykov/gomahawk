@@ -46,46 +46,52 @@ type fetchOpsImpl struct {
 	fileId int64
 }
 
+func (l *fetchOpsImpl) SendCommand(command msg.Command) error {
+	log.Println("command receiverd : ", command)	
+	l.last = command.GetGuid()
+	return nil
+}
+
 func (l *fetchOpsImpl) AddFiles(command *msg.AddFiles) error {
 	log.Println("Got Addfiles with ", len(command.Files), "files")
 	l.fileId = command.Files[0].Id
-	l.last = command.Guid
+	l.last = command.GetGuid()
 	return nil
 }
 
 func (l *fetchOpsImpl) DeleteFiles(command *msg.DeleteFiles) error {
 	log.Println("Got Deletefiles with ", len(command.Ids), "ids")
-	l.last = command.Guid
+	l.last = command.GetGuid()
 	return nil
 }
 
 func (l *fetchOpsImpl) CreatePlaylist(command *msg.CreatePlaylist) error {
-	l.last = command.Guid
+	l.last = command.GetGuid()
 	return nil
 }
 func (l *fetchOpsImpl) RenamePlaylist(command *msg.RenamePlaylist) error {
-	l.last = command.Guid
+	l.last = command.GetGuid()
 	return nil
 }
 func (l *fetchOpsImpl) SetPlaylistRevision(command *msg.SetPlaylistRevision) error {
-	l.last = command.Guid
+	l.last = command.GetGuid()
 	return nil
 }
 
 func (l *fetchOpsImpl) DeletePlaylist(command *msg.DeletePlaylist) error {
-	l.last = command.Guid
+	l.last = command.GetGuid()
 	return nil
 }
 
 func (l *fetchOpsImpl) SocialAction(command *msg.SocialAction) error {
-	l.last = command.Guid
+	l.last = command.GetGuid()
 	return nil
 }
 
 func (l *fetchOpsImpl) LogPlayback(command *msg.LogPlayback) error {
 	//	log.Println("got stopplaying")
 	log.Printf("%#v\n", command)
-	l.last = command.Guid
+	l.last = command.GetGuid()
 	return nil
 }
 

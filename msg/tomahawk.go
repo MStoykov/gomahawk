@@ -1,5 +1,10 @@
 package msg
 
+type Command interface {
+	GetCommand() string
+	GetGuid()    string
+}
+
 // This is interface represents ONE fetchop workflow
 //
 // Every call means a given command has been sent. The commands are in order and the interface CAN NOT be used in parallel.
@@ -12,13 +17,6 @@ package msg
 //
 // When the interface is being implemented in order to receive commands returning error will stop the calling of methods but the network activity may still continue
 type FetchOpsMethod interface {
-	AddFiles(*AddFiles) error
-	DeleteFiles(*DeleteFiles) error
-	CreatePlaylist(*CreatePlaylist) error
-	RenamePlaylist(*RenamePlaylist) error
-	SetPlaylistRevision(*SetPlaylistRevision) error
-	DeletePlaylist(*DeletePlaylist) error
-	SocialAction(*SocialAction) error
-	LogPlayback(*LogPlayback) error
+	SendCommand(Command Command) error
 	Close() error
 }
