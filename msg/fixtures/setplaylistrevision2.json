@@ -1,0 +1,11 @@
+{
+   "command": "setplaylistrevision", 
+   "guid": "966a99ac-d8ca-4e64-88de-8625b5b529bc"
+   "oldrev": "012f4a07-0362-4db3-a886-4c7766a17889", 
+   "newrev": "32aaed70-c262-439e-a3f6-b50197903815", 
+   "playlistguid": "d333b5f7-fda3-4f58-a387-18f47ca02b6d", 
+   "addedentries": [], 
+   "orderedguids": [
+       "77b113ae-6ee0-4e63-bcd2-94cb3dc3990c"
+   ]
+}

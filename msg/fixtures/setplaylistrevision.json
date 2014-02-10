@@ -1,0 +1,39 @@
+{
+   "command": "setplaylistrevision", 
+   "guid": "4181526a-1298-4130-8b1d-59eea3a8249a",
+   "oldrev": "", 
+   "newrev": "012f4a07-0362-4db3-a886-4c7766a17889", 
+   "playlistguid": "d333b5f7-fda3-4f58-a387-18f47ca02b6d", 
+   "addedentries": [
+       {
+           "duration": 4294967295, 
+           "lastmodified": 0, 
+           "guid": "77b113ae-6ee0-4e63-bcd2-94cb3dc3990c", 
+           "annotation": "", 
+           "query": {
+               "album": "Yoshimi Battles the Pink Robots", 
+               "duration": -1, 
+               "qid": "b8e24961-7041-48db-9f41-161f4aadf362", 
+               "track": "Yoshimi Battles the Pink Robots, Part 1", 
+               "artist": "The Flaming Lips"
+           }
+       }, 
+       {
+           "duration": 4294967295, 
+           "lastmodified": 0, 
+           "guid": "12ef55df-cbe1-4756-be71-b2209bcd6199", 
+           "annotation": "", 
+           "query": {
+               "album": "Yoshimi Battles the Pink Robots", 
+               "duration": -1, 
+               "qid": "0cf3bd28-35aa-4711-ab4e-182a92b55cfd", 
+               "track": "Yoshimi Battles the Pink Robots, Part 2", 
+               "artist": "The Flaming Lips"
+           }
+       }
+   ], 
+   "orderedguids": [
+       "77b113ae-6ee0-4e63-bcd2-94cb3dc3990c", 
+       "12ef55df-cbe1-4756-be71-b2209bcd6199"
+   ]
+}

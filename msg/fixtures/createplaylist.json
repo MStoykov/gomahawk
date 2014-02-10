@@ -1,0 +1,13 @@
+{
+   "command": "createplaylist", 
+   "guid": "235517ef-488d-4d35-a5c3-6e2092aa0edd",
+   "playlist": {
+       "info": "", 
+       "creator": "My Collection", 
+       "createdon": 1321308437, 
+       "title": "New Playlist", 
+       "currentrevision": "", 
+       "shared": false, 
+       "guid": "d333b5f7-fda3-4f58-a387-18f47ca02b6d"
+   }
+}
