@@ -20,6 +20,7 @@ func NewCommandProcessor() *CommandProcessor {
 	c.registered = make(map[string]CommandParser)
 
 	c.registered["addfiles"] = func(m *Msg) (Command, error) { return NewAddFiles(m) }
+	c.registered["deletefiles"] = NewDeleteFiles
 	c.registered["logplayback"] = func(m *Msg) (Command, error) { return NewLogPlayBack(m) }
 
 	return c

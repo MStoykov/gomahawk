@@ -10,7 +10,7 @@ type DeleteFiles struct {
 	Ids []int64 `json:"ids"`
 }
 
-func NewDeleteFiles(m *Msg) (d *DeleteFiles, err error) {
+func NewDeleteFiles(m *Msg) (d Command, err error) {
 	d = new(DeleteFiles)
 	err = json.Unmarshal(m.Payload(), d)
 	if err != nil {
