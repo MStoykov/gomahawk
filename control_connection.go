@@ -1,7 +1,6 @@
 package gomahawk
 
 import (
-	"bytes"
 	"encoding/json"
 	"log"
 	"time"
@@ -71,7 +70,7 @@ func newControlConnection(g Gomahawk, cm *connectionManager, conn *connection, i
 	c.id = id
 
 	go func() {
-		for  {
+		for {
 			m, err := c.processor.ReadMSG() // handle err
 			err = c.handleMsg(m)
 			if err != nil {
@@ -131,7 +130,7 @@ func (c *controlConnection) sendDBSyncOffer() error {
 	c.dbsyncKey = offer.Key
 
 	offerBytes, err := json.Marshal(offer)
-	msg := msg.NewMsg(bytes.NewBuffer(offerBytes), msg.SETUP|msg.JSON)
+	msg := msg.NewMsg(offerBytes, msg.SETUP|msg.JSON)
 	log.Println("gonna sedn offer", msg)
 	_, err = c.conn.Write(msg.Bytes())
 	if err != nil {

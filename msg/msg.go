@@ -19,17 +19,17 @@ const (
 
 // a generic Message between tomahawks
 type Msg struct {
-	payload *bytes.Buffer
+	payload []byte
 	flag    byte
 	size    uint32
 }
 
 // Create new Message with the given payload and flags
-func NewMsg(payload *bytes.Buffer, flag byte) *Msg {
+func NewMsg(payload []byte, flag byte) *Msg {
 	return &Msg{
 		payload,
 		flag,
-		uint32(payload.Len()),
+		uint32(len(payload)),
 	}
 
 }
@@ -66,23 +66,18 @@ func (t *Msg) IsSetup() bool {
 	return t.flag&SETUP == SETUP
 }
 
-// Returns the payload of the message as bytes.Buffer
-func (t *Msg) PayloadBuf() *bytes.Buffer {
-	return t.payload
-}
-
 // Returns the payload of the message as byte array
 func (t *Msg) Payload() []byte {
-	return t.payload.Bytes()
+	return t.payload
 }
 
 // returns the byte representation of the message
 func (t *Msg) Bytes() []byte {
-	b := make([]byte, t.payload.Len()+5)
-	binary.BigEndian.PutUint32(b[:4], uint32(t.payload.Len()))
+	b := make([]byte, len(t.payload)+5)
+	binary.BigEndian.PutUint32(b[:4], uint32(len(t.payload)))
 
 	b[4] = t.flag
-	copy(b[5:], t.payload.Bytes())
+	copy(b[5:], t.payload)
 	return b
 }
 
@@ -94,12 +89,19 @@ func (t *Msg) Uncompress() {
 
 	t.flag ^= COMPRESSED
 
-	t.payload = uncompressBuffer(t.payload)
+	t.payload = uncompress(t.payload)
 
 }
 
 // Compresses an uncompressed payload
 func (t *Msg) Compress() {
+	if t.IsCompressed() {
+		return
+	}
+
+	t.flag ^= COMPRESSED
+
+	t.payload = compress(t.payload)
 
 }
 
@@ -109,21 +111,20 @@ func ParseMsg(b []byte) (*Msg, error) {
 	result := new(Msg)
 	size = binary.BigEndian.Uint32(b[:4])
 	result.flag = b[4]
-	payload := bytes.NewBuffer(b[5:])
+	payload := b[5:]
 	result.size = size
 	result.payload = payload
 	return result, nil
 }
 
 func (t *Msg) String() string {
-	var payload *bytes.Buffer
+	var payload []byte
 	if t.IsCompressed() {
-		payload = bytes.NewBuffer(uncompress(t.payload.Bytes()))
-		fmt.Println(payload.Len())
+		payload = uncompress(t.payload)
 	} else {
 		payload = t.payload
 	}
-	return fmt.Sprintf("size: %d, flag: %s,\n payload[%s]", t.payload.Len(), t.flagToString(), payload)
+	return fmt.Sprintf("size: %d, flag: %s,\n payload[%s]", len(payload), t.flagToString(), payload)
 }
 
 func (t *Msg) flagToString() string {

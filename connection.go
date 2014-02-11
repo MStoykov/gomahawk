@@ -52,14 +52,14 @@ func (c *connection) sendOffer(offer *msg.Msg) error {
 	}
 
 	m, err := c.processor.ReadMSG()
-	if !m.IsSetup() || m.PayloadBuf().String() != "4" {
+	if !m.IsSetup() || string(m.Payload()) != "4" {
 		log.Println("We didn't get versionCheck")
 		log.Println("We got", m)
 		c.conn.Close()
 		return errors.New("VersionCheck failed")
 	}
 
-	m = msg.NewMsg(bytes.NewBufferString("ok"), msg.SETUP)
+	m = msg.NewMsg([]byte("ok"), msg.SETUP)
 
 	_, err = c.conn.Write(m.Bytes())
 	if err != nil {
@@ -74,9 +74,7 @@ func (c *connection) Close() error {
 }
 
 func (c *connection) sendversionCheck() error {
-	m := msg.NewMsg(
-		bytes.NewBuffer([]byte{'4'}),
-		msg.SETUP)
+	m := msg.NewMsg([]byte{'4'}, msg.SETUP)
 	_, err := c.conn.Write(m.Bytes())
 	if err != nil {
 		return err

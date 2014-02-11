@@ -1,7 +1,6 @@
 package msg
 
 import (
-	"bytes"
 	"encoding/json"
 	"strconv"
 )
@@ -18,7 +17,7 @@ type OfferMsg struct {
 // parse the payload of the given message as an Offer
 func ParseOffer(msg *Msg) (*OfferMsg, error) {
 	offer := new(OfferMsg)
-	err := json.Unmarshal(msg.payload.Bytes(), offer)
+	err := json.Unmarshal(msg.payload, offer)
 	if err != nil {
 		offer = nil
 	}
@@ -42,5 +41,5 @@ func NewFileRequestOffer(fileId int64, controlid string) (*Msg, error) {
 		return nil, err
 	}
 
-	return NewMsg(bytes.NewBuffer(r), SETUP), nil
+	return NewMsg(r, SETUP), nil
 }

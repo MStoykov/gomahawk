@@ -13,7 +13,7 @@ type DBsyncOffer struct {
 
 func ParseDBSyncOffer(msg *Msg) (*DBsyncOffer, error) {
 	offer := new(DBsyncOffer)
-	err := json.Unmarshal(msg.payload.Bytes(), offer)
+	err := json.Unmarshal(msg.payload, offer)
 	if err != nil {
 		offer = nil
 	}

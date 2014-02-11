@@ -2,7 +2,6 @@ package msg
 
 import (
 	"bufio"
-	"bytes"
 	"encoding/binary"
 	"io"
 )
@@ -27,19 +26,19 @@ func (p *Processor) ReadMSG() (msg *Msg, err error) {
 func ReadMSG(reader io.Reader) (msg *Msg, err error) {
 	msg = new(Msg)
 	var buf []byte
-	buf = make ([]byte, 4)
+	buf = make([]byte, 4)
 	_, err = io.ReadFull(reader, buf)
 	if err != nil {
 		return nil, err
 	}
 
 	msg.size = binary.BigEndian.Uint32(buf)
-	buf = make ([]byte, msg.size + 1)
+	buf = make([]byte, msg.size+1)
 	_, err = io.ReadFull(reader, buf)
 	if err != nil {
 		return nil, err
 	}
-	msg.flag= buf[0]
-	msg.payload = bytes.NewBuffer(buf[1:])
+	msg.flag = buf[0]
+	msg.payload = buf[1:]
 	return msg, nil
 }

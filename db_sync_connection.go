@@ -1,7 +1,6 @@
 package gomahawk
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"log"
@@ -49,7 +48,7 @@ func (d *dBConn) sendFetchOps(id string) error {
 		return err
 	}
 	log.Println(j)
-	m := msg.NewMsg(bytes.NewBuffer(j), msg.JSON)
+	m := msg.NewMsg(j, msg.JSON)
 	log.Println("sending fetch ops m :[ ", m, "]")
 	size, err := d.conn.Write(m.Bytes())
 
@@ -71,7 +70,7 @@ func newDBConn(conn *secondaryConnection) (*dBConn, error) {
 
 	go func() {
 		for {
-			m,err := d.processor.ReadMSG()
+			m, err := d.processor.ReadMSG()
 			err = d.handleMsg(m)
 			if err != nil {
 				log.Println(err)
@@ -101,7 +100,7 @@ func openNewDBConn(offer *msg.DBsyncOffer, conn *connection, controlid string) (
 		log.Println("error while marshaling offer", err)
 		return nil, err
 	}
-	m := msg.NewMsg(bytes.NewBuffer(offerBytes), msg.SETUP|msg.JSON)
+	m := msg.NewMsg(offerBytes, msg.SETUP|msg.JSON)
 	log.Println("gonna send msg", m)
 	_, err = d.conn.Write(m.Bytes())
 	if err != nil {
@@ -112,8 +111,8 @@ func openNewDBConn(offer *msg.DBsyncOffer, conn *connection, controlid string) (
 	d.processor = msg.NewProcessor(d.conn, nil)
 
 	go func() {
-		for{
-			m, err :=  d.processor.ReadMSG()
+		for {
+			m, err := d.processor.ReadMSG()
 			err = d.handleMsg(m)
 			if err != nil {
 				log.Println(err)
