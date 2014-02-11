@@ -13,7 +13,7 @@ type File struct {
 	Mtime    int64  `json:"mtime"`    // the last modification time of the file in seconds since 1970-01-01
 	Duration int    `json:"duration"` // duration of the song in seconds
 	Bitrate  int    `json:"bitrate"`  // bitrate of the file (can be 0)
-	Size     int    `json:"Size"`     // size of the file in bytes
+	Size     int    `json:"size"`     // size of the file in bytes
 }
 
 /*
