@@ -19,8 +19,14 @@ func openNewStreamConnection(id int64, c *connection, parent *connection, offerM
 	conn.id = id
 	conn.stream = make(chan []byte)
 	go func() {
-		for m := range conn.sync {
-			if err := conn.handleMsg(m); err != nil {
+		for {
+			m, err := conn.processor.ReadMSG()
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			if err = conn.handleMsg(m); err != nil {
 				log.Println("error in stream handling", err)
 			}
 		}

@@ -70,8 +70,9 @@ func newDBConn(conn *secondaryConnection) (*dBConn, error) {
 	d.commandProcessor = msg.NewCommandProcessor()
 
 	go func() {
-		for m := range d.sync {
-			err := d.handleMsg(m)
+		for {
+			m,err := d.processor.ReadMSG()
+			err = d.handleMsg(m)
 			if err != nil {
 				log.Println(err)
 			}
@@ -108,13 +109,12 @@ func openNewDBConn(offer *msg.DBsyncOffer, conn *connection, controlid string) (
 		return nil, err
 	}
 
-	sync := make(chan *msg.Msg)
-	d.sync = sync
-	d.processor = msg.NewProcessor(d.conn, sync)
+	d.processor = msg.NewProcessor(d.conn, nil)
 
 	go func() {
-		for m := range d.sync {
-			err := d.handleMsg(m)
+		for{
+			m, err :=  d.processor.ReadMSG()
+			err = d.handleMsg(m)
 			if err != nil {
 				log.Println(err)
 				return
