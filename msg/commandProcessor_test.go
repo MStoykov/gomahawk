@@ -2,6 +2,7 @@ package msg_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"io/ioutil"
 
 	. "github.com/MStoykov/gomahawk/msg"
@@ -9,16 +10,28 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+func getFixtureSafe(name string) ([]byte, error) {
+	return ioutil.ReadFile("./fixtures/" + name)
+}
+
+func getJSONFixture(name string) []byte {
+	b, err := getJSONFixtureSafe(name)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func getJSONFixtureSafe(name string) ([]byte, error) {
+	return getFixtureSafe(name + ".json")
+}
+
 var _ = Describe("CommandProcessor", func() {
 	var (
 		msgWrapper = func(b []byte) *Msg {
 			return NewMsg(bytes.NewBuffer(b), JSON|DBOP)
 		}
-		processor           *CommandProcessor
-		addfilesJSON, _     = ioutil.ReadFile("./fixtures/addfiles.json")
-		deletefilesJSON, _  = ioutil.ReadFile("./fixtures/deletefiles.json")
-		logplaybackJSON, _  = ioutil.ReadFile("./fixtures/logplayback.json")
-		logplayback2JSON, _ = ioutil.ReadFile("./fixtures/logplayback2.json")
+		processor *CommandProcessor
 	)
 
 	BeforeEach(func() {
@@ -26,47 +39,50 @@ var _ = Describe("CommandProcessor", func() {
 	})
 
 	Describe("Processor", func() {
+		var (
+			command Command
+			err     error
+		)
 
-		It("parses AddFiles", func() {
-			command, err := processor.ParseCommand(msgWrapper(addfilesJSON))
-			Expect(err).ToNot(HaveOccurred())
-			addFiles, ok := command.(*AddFiles)
-			Expect(ok).To(BeTrue())
+		var CommonAssertions = func(jsonB []byte) {
+			BeforeEach(func() {
+				command, err = processor.ParseCommand(msgWrapper(jsonB))
+			})
 
-			id := addFiles.Files[0].Id
-			Expect(id).To(BeNumerically("==", 1))
+			It("parses it", func() {
+				Expect(err).ToNot(HaveOccurred())
+			})
 
-		})
+			It("should be marshalled to an equal json", func() {
+				j, err := json.Marshal(command)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(j).To(MatchJSON(jsonB))
+			})
 
-		It("parses DeleteFiles", func() {
-			command, err := processor.ParseCommand(msgWrapper(deletefilesJSON))
-			Expect(err).ToNot(HaveOccurred())
-			deleteFiles, ok := command.(*DeleteFiles)
-			Expect(ok).To(BeTrue())
+		}
 
-			id := deleteFiles.Ids[2]
-			Expect(id).To(BeNumerically("==", 353))
+		var testMatrix = []struct {
+			name  string
+			jsonB []byte
+		}{
+			{"AddFiles", getJSONFixture("addfiles")},
+			{"DeleteFiles", getJSONFixture("deletefiles")},
+			{"LogPlayback for start", getJSONFixture("logplayback")},
+			{"LogPlayback for end", getJSONFixture("logplayback2")},
+			{"CreatePlaylist", getJSONFixture("createplaylist")},
+			{"DeletePlaylist", getJSONFixture("deleteplaylist")},
+			{"RenamePlaylist", getJSONFixture("renameplaylist")},
+			{"SetPlaylistRevision for new playlist", getJSONFixture("setplaylistrevision")},
+			{"SetPlaylistRevision for not new playlist", getJSONFixture("setplaylistrevision2")},
+			{"SetCollectionAttributes", getJSONFixture("setcollectionattributes")},
+			{"SocialAction love", getJSONFixture("socialaction")},
+			{"SocialAction unlove", getJSONFixture("socialaction2")},
+		}
 
-		})
-
-		It("parses LogPlayback", func() {
-			command, err := processor.ParseCommand(msgWrapper(logplaybackJSON))
-			Expect(err).ToNot(HaveOccurred())
-			deleteFiles, ok := command.(*LogPlayback)
-			Expect(ok).To(BeTrue())
-
-			Expect(deleteFiles.Track).To(Equal("Brass Monkey"))
-			Expect(deleteFiles.Action).To(BeNumerically("==", 1))
-
-			command, err = processor.ParseCommand(msgWrapper(logplayback2JSON))
-			Expect(err).ToNot(HaveOccurred())
-			deleteFiles, ok = command.(*LogPlayback)
-			Expect(ok).To(BeTrue())
-
-			Expect(deleteFiles.Track).To(Equal("Brass Monkey"))
-			Expect(deleteFiles.Action).To(BeNumerically("==", 2))
-
-		})
+		for _, test := range testMatrix {
+			Context("Given"+test.name, func() {
+				CommonAssertions(test.jsonB)
+			})
+		}
 	})
-
 })

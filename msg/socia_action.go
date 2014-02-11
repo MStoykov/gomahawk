@@ -1,9 +1,5 @@
 package msg
 
-import (
-	"encoding/json"
-)
-
 // A social Action command
 type SocialAction struct {
 	Song
@@ -15,27 +11,4 @@ type SocialAction struct {
 	// comment to the action "true" means Love a song "false" Unlove when
 	// Action == Love
 	Timestamp int64 `json:"timestamp"` // timestamp of the action
-}
-
-/*
-func (s *SocialAction) GetComment() string {
-	return s.Comment
-}
-
-func (s *SocialAction) GetTimestamp() int64 {
-	return s.Timestamp
-}
-
-func (s *SocialAction) GetAction() string {
-	return s.Action
-}
-*/
-
-func NewSocialAction(msg *Msg) (*SocialAction, error) {
-	s := new(SocialAction)
-	err := json.Unmarshal(msg.Payload(), s)
-	if err != nil {
-		return nil, err
-	}
-	return s, nil
 }
