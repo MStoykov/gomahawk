@@ -10,7 +10,7 @@ import (
 )
 
 type connection struct {
-	conn      io.ReadWriteCloser
+	conn io.ReadWriteCloser
 	*msg.OfferMsg
 }
 

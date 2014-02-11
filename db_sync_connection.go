@@ -60,13 +60,13 @@ type dBConn struct {
 	*secondaryConnection
 	offer            *msg.DBsyncOffer
 	fom              msg.FetchOpsMethod
-	commandProcessor *msg.CommandProcessor
+	commandProcessor *msg.CommandParser
 }
 
 func newDBConn(conn *secondaryConnection) (*dBConn, error) {
 	d := new(dBConn)
 	d.secondaryConnection = conn
-	d.commandProcessor = msg.NewCommandProcessor()
+	d.commandProcessor = msg.NewCommandParser()
 
 	go func() {
 		for {
@@ -86,7 +86,7 @@ func openNewDBConn(offer *msg.DBsyncOffer, conn *connection, controlid string) (
 	d := new(dBConn)
 	d.offer = offer
 	d.connection = conn
-	d.commandProcessor = msg.NewCommandProcessor()
+	d.commandProcessor = msg.NewCommandParser()
 
 	dbsecondaryoffer := secondaryOffer{
 		"accept-offer",

@@ -9,29 +9,16 @@ import (
 
 var commandRe = regexp.MustCompile(`"command"\s*:\s*"([^"]+)"`)
 
-type commandParser func(*Msg) (Command, error)
+type CommandAllocator func() Command
 
-type CommandProcessor struct {
-	registered map[string]commandParser
+type CommandParser struct {
+	registered map[string]CommandAllocator
 }
 
-type Generator func() Command
+func NewCommandParser() *CommandParser {
+	c := new(CommandParser)
 
-func unmarshalFuncFor(generator Generator) commandParser {
-	return func(m *Msg) (Command, error) {
-		command := generator()
-		err := json.Unmarshal(m.Payload(), command)
-		if err != nil {
-			return nil, err
-		}
-		return command, nil
-	}
-}
-
-func NewCommandProcessor() *CommandProcessor {
-	c := new(CommandProcessor)
-
-	c.registered = make(map[string]commandParser)
+	c.registered = make(map[string]CommandAllocator)
 
 	c.Register("addfiles", func() Command {
 		return new(AddFiles)
@@ -63,14 +50,12 @@ func NewCommandProcessor() *CommandProcessor {
 	return c
 }
 
-func (c *CommandProcessor) Register(commandName string, g Generator) {
-	c.registered[commandName] = unmarshalFuncFor(g)
+func (c *CommandParser) Register(commandName string, allocator CommandAllocator) {
+	c.registered[commandName] = allocator
 }
 
-func (c *CommandProcessor) ParseCommand(m *Msg) (command Command, err error) {
-	if m.IsCompressed() {
-		m.Uncompress()
-	}
+func (c *CommandParser) ParseCommand(m *Msg) (command Command, err error) {
+	m.Uncompress()
 
 	b := commandRe.FindSubmatch(m.Bytes())
 
@@ -79,8 +64,13 @@ func (c *CommandProcessor) ParseCommand(m *Msg) (command Command, err error) {
 	}
 
 	commandName := string(b[1])
-	if parseFunction := c.registered[commandName]; parseFunction != nil {
-		return parseFunction(m)
+	if allocator := c.registered[commandName]; allocator != nil {
+		command := allocator()
+		err := json.Unmarshal(m.Payload(), command)
+		if err != nil {
+			return nil, err
+		}
+		return command, nil
 	}
 
 	return nil, fmt.Errorf("Not registered Command %s ", commandName)
