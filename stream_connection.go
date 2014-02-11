@@ -20,7 +20,7 @@ func openNewStreamConnection(id int64, c *connection, parent *connection, offerM
 	conn.stream = make(chan []byte)
 	go func() {
 		for {
-			m, err := conn.processor.ReadMSG()
+			m, err := conn.ReadMsg()
 			if err != nil {
 				log.Println(err)
 				return

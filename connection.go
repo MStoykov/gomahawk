@@ -11,16 +11,15 @@ import (
 
 type connection struct {
 	conn      io.ReadWriteCloser
-	processor *msg.Processor
 	*msg.OfferMsg
 }
 
-func (c *connection) setupProcessor() {
-	c.processor = msg.NewProcessor(c.conn, nil)
+func (c *connection) ReadMsg() (*msg.Msg, error) {
+	return msg.ReadMSG(c.conn)
 }
 
 func (c *connection) receiveOffer() error {
-	m, err := c.processor.ReadMSG()
+	m, err := c.ReadMsg()
 	offer, err := msg.ParseOffer(m)
 	if err != nil {
 		return err
@@ -33,7 +32,7 @@ func (c *connection) receiveOffer() error {
 		return err
 	}
 
-	m, err = c.processor.ReadMSG()
+	m, err = c.ReadMsg()
 	if !m.IsSetup() || !bytes.Equal(m.Payload(), []byte("ok")) {
 		log.Println("the version was not ok with the remote for ", offer)
 		c.conn.Close()
@@ -51,7 +50,7 @@ func (c *connection) sendOffer(offer *msg.Msg) error {
 		return err
 	}
 
-	m, err := c.processor.ReadMSG()
+	m, err := c.ReadMsg()
 	if !m.IsSetup() || string(m.Payload()) != "4" {
 		log.Println("We didn't get versionCheck")
 		log.Println("We got", m)

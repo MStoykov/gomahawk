@@ -70,7 +70,7 @@ func newDBConn(conn *secondaryConnection) (*dBConn, error) {
 
 	go func() {
 		for {
-			m, err := d.processor.ReadMSG()
+			m, err := d.ReadMsg()
 			err = d.handleMsg(m)
 			if err != nil {
 				log.Println(err)
@@ -108,11 +108,9 @@ func openNewDBConn(offer *msg.DBsyncOffer, conn *connection, controlid string) (
 		return nil, err
 	}
 
-	d.processor = msg.NewProcessor(d.conn, nil)
-
 	go func() {
 		for {
-			m, err := d.processor.ReadMSG()
+			m, err := d.ReadMsg()
 			err = d.handleMsg(m)
 			if err != nil {
 				log.Println(err)

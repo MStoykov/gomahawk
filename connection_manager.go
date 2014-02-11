@@ -48,7 +48,6 @@ func (cm *connectionManager) newConnection(tcpConn *net.TCPConn) (*connection, e
 	defer cm.Unlock()
 	c := new(connection)
 	c.conn = tcpConn
-	c.setupProcessor()
 	cm.m[c] = tcpConn
 	return c, nil
 }

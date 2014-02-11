@@ -71,7 +71,7 @@ func newControlConnection(g Gomahawk, cm *connectionManager, conn *connection, i
 
 	go func() {
 		for {
-			m, err := c.processor.ReadMSG() // handle err
+			m, err := c.ReadMsg() // handle err
 			err = c.handleMsg(m)
 			if err != nil {
 				log.Println(err)

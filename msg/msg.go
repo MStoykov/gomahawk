@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"io"
 )
 
 const (
@@ -154,4 +155,23 @@ func (t *Msg) flagToString() string {
 		buf.WriteString("Setup ")
 	}
 	return buf.String()
+}
+func ReadMSG(reader io.Reader) (msg *Msg, err error) {
+	msg = new(Msg)
+	var buf []byte
+	buf = make([]byte, 4)
+	_, err = io.ReadFull(reader, buf)
+	if err != nil {
+		return nil, err
+	}
+
+	msg.size = binary.BigEndian.Uint32(buf)
+	buf = make([]byte, msg.size+1)
+	_, err = io.ReadFull(reader, buf)
+	if err != nil {
+		return nil, err
+	}
+	msg.flag = buf[0]
+	msg.payload = buf[1:]
+	return msg, nil
 }
