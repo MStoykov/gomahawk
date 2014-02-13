@@ -23,3 +23,13 @@ func ParseDBSyncOffer(msg *Msg) (*DBsyncOffer, error) {
 
 	return offer, err
 }
+
+func NewDBSyncOfferMsg(key string) (m *Msg) {
+	offer := DBsyncOffer {
+		Method:"dbsync-offer",
+		Key: key,
+	}
+	offerBytes, _ := json.Marshal(offer)
+
+	return NewMsg(offerBytes, SETUP|JSON)
+}

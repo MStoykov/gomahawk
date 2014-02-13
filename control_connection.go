@@ -1,7 +1,6 @@
 package gomahawk
 
 import (
-	"encoding/json"
 	"log"
 	"time"
 
@@ -120,16 +119,12 @@ func (c *controlConnection) AddConnection(conn *connection) error {
 }
 
 func (c *controlConnection) sendDBSyncOffer() error {
-	offer := new(msg.DBsyncOffer)
-	offer.Method = "dbsync-offer"
 	uuid, _ := gouuid.NewV4()
-	offer.Key = uuid.String()
-	c.dbsyncKey = offer.Key
+	c.dbsyncKey = uuid.String()
 
-	offerBytes, err := json.Marshal(offer)
-	msg := msg.NewMsg(offerBytes, msg.SETUP|msg.JSON)
+	msg := msg.NewDBSyncOfferMsg(c.dbsyncKey)
 	log.Println("gonna sedn offer", msg)
-	_, err = c.conn.Write(msg.Bytes())
+	_, err := c.conn.Write(msg.Bytes())
 	if err != nil {
 		log.Println("error while sending offer for dbconnection")
 	}
