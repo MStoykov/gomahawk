@@ -2,28 +2,11 @@ package msg_test
 
 import (
 	"encoding/json"
-	"io/ioutil"
 
 	. "github.com/MStoykov/gomahawk/msg"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
-
-func getFixtureSafe(name string) ([]byte, error) {
-	return ioutil.ReadFile("./fixtures/" + name)
-}
-
-func getJSONFixture(name string) []byte {
-	b, err := getJSONFixtureSafe(name)
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
-func getJSONFixtureSafe(name string) ([]byte, error) {
-	return getFixtureSafe(name + ".json")
-}
 
 var _ = Describe("CommandParser", func() {
 	var (

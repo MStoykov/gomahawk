@@ -32,7 +32,6 @@ func NewMsg(payload []byte, flag byte) *Msg {
 		flag,
 		uint32(len(payload)),
 	}
-
 }
 
 func (t *Msg) IsRaw() bool {
@@ -84,38 +83,18 @@ func (t *Msg) Bytes() []byte {
 
 // Uncompresses a compressed payload
 func (t *Msg) Uncompress() {
-	if !t.IsCompressed() {
-		return
+	if t.IsCompressed() {
+		t.flag ^= COMPRESSED
+		t.payload = uncompress(t.payload)
 	}
-
-	t.flag ^= COMPRESSED
-
-	t.payload = uncompress(t.payload)
-
 }
 
 // Compresses an uncompressed payload
 func (t *Msg) Compress() {
-	if t.IsCompressed() {
-		return
+	if !t.IsCompressed() {
+		t.flag ^= COMPRESSED
+		t.payload = compress(t.payload)
 	}
-
-	t.flag ^= COMPRESSED
-
-	t.payload = compress(t.payload)
-
-}
-
-// decodes message from it's binary representation
-func ParseMsg(b []byte) (*Msg, error) {
-	var size uint32
-	result := new(Msg)
-	size = binary.BigEndian.Uint32(b[:4])
-	result.flag = b[4]
-	payload := b[5:]
-	result.size = size
-	result.payload = payload
-	return result, nil
 }
 
 func (t *Msg) String() string {
@@ -125,6 +104,7 @@ func (t *Msg) String() string {
 	} else {
 		payload = t.payload
 	}
+
 	return fmt.Sprintf("size: %d, flag: %s,\n payload[%s]", len(payload), t.flagToString(), payload)
 }
 
@@ -157,21 +137,21 @@ func (t *Msg) flagToString() string {
 	return buf.String()
 }
 func ReadMSG(reader io.Reader) (msg *Msg, err error) {
-	msg = new(Msg)
-	var buf []byte
-	buf = make([]byte, 4)
+	buf := make([]byte, 5)
 	_, err = io.ReadFull(reader, buf)
 	if err != nil {
 		return nil, err
 	}
 
-	msg.size = binary.BigEndian.Uint32(buf)
-	buf = make([]byte, msg.size+1)
-	_, err = io.ReadFull(reader, buf)
+	msg = new(Msg)
+	msg.size = binary.BigEndian.Uint32(buf[:4])
+	msg.flag = buf[4]
+
+	msg.payload = make([]byte, msg.size)
+	_, err = io.ReadFull(reader, msg.payload)
 	if err != nil {
 		return nil, err
 	}
-	msg.flag = buf[0]
-	msg.payload = buf[1:]
+
 	return msg, nil
 }
