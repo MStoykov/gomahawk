@@ -44,7 +44,7 @@ func (c *connection) receiveOffer() error {
 }
 
 func (c *connection) sendOffer(offer *msg.Msg) error {
-	_, err := c.conn.Write(offer.Bytes())
+	_, err := offer.WriteTo(c.conn)
 	if err != nil {
 		c.conn.Close()
 		return err
@@ -60,7 +60,7 @@ func (c *connection) sendOffer(offer *msg.Msg) error {
 
 	m = msg.NewMsg([]byte("ok"), msg.SETUP)
 
-	_, err = c.conn.Write(m.Bytes())
+	_, err = m.WriteTo(c.conn)
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func (c *connection) Close() error {
 
 func (c *connection) sendVersionCheck() error {
 	m := msg.NewMsg([]byte{'4'}, msg.SETUP)
-	_, err := c.conn.Write(m.Bytes())
+	_, err := m.WriteTo(c.conn)
 	if err != nil {
 		return err
 	}

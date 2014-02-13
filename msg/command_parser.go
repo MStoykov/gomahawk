@@ -57,7 +57,7 @@ func (c *CommandParser) Register(commandName string, allocator CommandAllocator)
 func (c *CommandParser) ParseCommand(m *Msg) (command Command, err error) {
 	m.Uncompress()
 
-	b := commandRe.FindSubmatch(m.Bytes())
+	b := commandRe.FindSubmatch(m.payload)
 
 	if len(b) != 2 {
 		return nil, errors.New("Given Message is not a command")

@@ -1,6 +1,8 @@
 package msg_test
 
 import (
+	"bytes"
+
 	. "github.com/MStoykov/gomahawk/msg"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -38,7 +40,9 @@ var _ = Describe("Msg", func() {
 		})
 
 		It("written to bytes it returns the same bytes", func() {
-			Expect(msg.Bytes()).To(Equal(getFixture("addfiles.msg")))
+			buf := new(bytes.Buffer)
+			msg.WriteTo(buf)
+			Expect(buf.Bytes()).To(Equal(getFixture("addfiles.msg")))
 		})
 	})
 })

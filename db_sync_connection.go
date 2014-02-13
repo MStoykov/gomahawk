@@ -13,10 +13,7 @@ func (d *dBConn) Trigger() error {
 // request changes after given id. "" means all
 func (d *dBConn) sendFetchOps(id string) error {
 	m := msg.NewFetchOpsMsg(id)
-	log.Println("sending fetch ops m :[ ", m, "]")
-	size, err := d.conn.Write(m.Bytes())
-
-	log.Println("sending fetch ops wrote  ", size, " bytes")
+	_, err := m.WriteTo(d.conn)
 	return err
 }
 
@@ -54,7 +51,7 @@ func openNewDBConn(offer *msg.DBsyncOffer, conn *connection, controlid string) (
 
 	m := msg.NewSecondaryOffer(controlid, offer.Key, 50210)
 	log.Println("gonna send msg", m)
-	_, err := d.conn.Write(m.Bytes())
+	_, err := m.WriteTo(d.conn)
 	if err != nil {
 		log.Println("error while sending offer on dbconnection")
 		return nil, err

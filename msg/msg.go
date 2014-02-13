@@ -71,16 +71,6 @@ func (t *Msg) Payload() []byte {
 	return t.payload
 }
 
-// returns the byte representation of the message
-func (t *Msg) Bytes() []byte {
-	b := make([]byte, len(t.payload)+5)
-	binary.BigEndian.PutUint32(b[:4], uint32(len(t.payload)))
-
-	b[4] = t.flag
-	copy(b[5:], t.payload)
-	return b
-}
-
 // Uncompresses a compressed payload
 func (t *Msg) Uncompress() {
 	if t.IsCompressed() {
@@ -154,4 +144,18 @@ func ReadMSG(reader io.Reader) (msg *Msg, err error) {
 	}
 
 	return msg, nil
+}
+
+func (m *Msg) WriteTo(w io.Writer) (n int64, err error) {
+	b := make([]byte, 5)
+	b[4] = m.flag
+	binary.BigEndian.PutUint32(b[:4], uint32(len(m.payload)))
+	size, err := w.Write(b)
+	n += int64(size)
+	if err != nil {
+		return n, err
+	}
+	size, err = w.Write(m.payload)
+	n += int64(size)
+	return n, err
 }

@@ -52,7 +52,7 @@ func (c *controlConnection) LastPing() time.Time {
 
 }
 func (c *controlConnection) sendPing() error {
-	_, err := c.conn.Write(msg.MakePingMsg().Bytes())
+	_, err := msg.MakePingMsg().WriteTo(c.conn)
 	return err
 }
 
@@ -75,7 +75,6 @@ func newControlConnection(g Gomahawk, cm *connectionManager, conn *connection, i
 			}
 		}
 	}()
-	defer c.sendDBSyncOffer()
 
 	c.setupPingTimer()
 
@@ -122,12 +121,8 @@ func (c *controlConnection) sendDBSyncOffer() error {
 	uuid, _ := gouuid.NewV4()
 	c.dbsyncKey = uuid.String()
 
-	msg := msg.NewDBSyncOfferMsg(c.dbsyncKey)
-	log.Println("gonna sedn offer", msg)
-	_, err := c.conn.Write(msg.Bytes())
-	if err != nil {
-		log.Println("error while sending offer for dbconnection")
-	}
+	offer := msg.NewDBSyncOfferMsg(c.dbsyncKey)
+	_, err := offer.WriteTo(c.conn)
 	return err
 }
 
