@@ -1,47 +1,18 @@
 package gomahawk
 
 import (
-	"encoding/json"
 	"errors"
 	"log"
-	"regexp"
 
 	msg "github.com/MStoykov/gomahawk/msg"
 )
 
-type fetchOpsMethodMsg struct {
-	Method string `json:"method"` // method: fetchOps
-	Lastop string `json:"lastop"` // lastop :"66bd135d-113f-481a-977e-111111111111"
-}
-
-var re = regexp.MustCompile(`"command"\s*:\s*"([^"]+)"`)
-
 func (d *dBConn) Trigger() error {
 	return nil
 }
-
-func parseFetchOpsMethod(m *msg.Msg) (*fetchOpsMethodMsg, error) {
-	r := new(fetchOpsMethodMsg)
-	err := json.Unmarshal(m.Payload(), r)
-	if err != nil {
-		r = nil
-	}
-	return r, err
-
-}
-
 // request changes after given id. "" means all
 func (d *dBConn) sendFetchOps(id string) error {
-	met := &fetchOpsMethodMsg{
-		Method: "fetchops",
-		Lastop: id,
-	}
-	j, err := json.Marshal(met)
-	if err != nil {
-		return err
-	}
-	log.Println(j)
-	m := msg.NewMsg(j, msg.JSON)
+	m := msg.NewFetchOpsMsg(id)
 	log.Println("sending fetch ops m :[ ", m, "]")
 	size, err := d.conn.Write(m.Bytes())
 
