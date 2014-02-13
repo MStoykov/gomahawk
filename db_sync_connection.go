@@ -109,9 +109,7 @@ func (d *dBConn) FetchOps(fom msg.FetchOpsMethod, id string) error {
 }
 
 func (d *dBConn) handleMsg(m *msg.Msg) error {
-
 	if m.IsDBOP() {
-		log.Println("got a DBOP")
 		if d.fom != nil {
 			command, err := d.commandProcessor.ParseCommand(m)
 
@@ -129,7 +127,6 @@ func (d *dBConn) handleMsg(m *msg.Msg) error {
 		} else {
 			return errors.New("Got DBOP but no FetchOpsMethod")
 		}
-
 	}
 
 	offer, err := msg.ParseDBSyncOffer(m)
