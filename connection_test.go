@@ -80,7 +80,7 @@ var _ = Describe("Connection", func() {
 			connections[1] = new(connection)
 			connections[0].conn, connections[1].conn = newDoubleFakeConn()
 			c := make(chan string)
-			offer, _ := msg.NewFileRequestOffer(10, "someid")
+			offer := msg.NewFileRequestOffer(10, "someid")
 			go func() {
 				err := connections[0].receiveOffer()
 				Expect(err).ToNot(HaveOccurred())
