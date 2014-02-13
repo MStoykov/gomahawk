@@ -15,6 +15,14 @@ type CommandParser struct {
 	registered map[string]CommandAllocator
 }
 
+type NotRegisteredError struct {
+	commandName string
+}
+
+func (n NotRegisteredError) Error() string {
+	return fmt.Sprintf("Not registered Command %s", n.commandName)
+}
+
 func NewCommandParser() *CommandParser {
 	c := new(CommandParser)
 
@@ -73,5 +81,5 @@ func (c *CommandParser) ParseCommand(m *Msg) (command Command, err error) {
 		return command, nil
 	}
 
-	return nil, fmt.Errorf("Not registered Command %s ", commandName)
+	return nil, NotRegisteredError{commandName}
 }

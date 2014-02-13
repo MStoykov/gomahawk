@@ -20,6 +20,10 @@ func (c *connection) StartHandelingMessages() {
 	go func() { // do it with select and checking whether msgHandler is not nil
 		for {
 			m, err := c.ReadMsg()
+			if err != nil {
+				c.lastError = err
+				return
+			}
 			err = c.msgHandler(m)
 			if err != nil {
 				c.lastError = err

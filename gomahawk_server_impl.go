@@ -71,13 +71,13 @@ func (g *gomahawkServerImpl) newConnectionCallback(conn *net.TCPConn) error {
 
 	if err != nil {
 		conn.Close()
-		return nil
+		return err
 
 	}
 	err = c.receiveOffer()
 	if err != nil {
 		conn.Close()
-		return nil
+		return err
 
 	}
 	if c.NodeId == "" && c.ControlId != "" {

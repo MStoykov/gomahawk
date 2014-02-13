@@ -26,7 +26,7 @@ func (g *GomahawkImpl) NewTomahawkFound(addr net.Addr, name string) bool {
 }
 func (g *GomahawkImpl) NewDBConnection(t gomahawk.Tomahawk, db gomahawk.DBConnection) (gomahawk.DBConnection, error) {
 	log.Printf("NewDBConneciton(%#v, %#v) ", t, db)
-	db.FetchOps(&fetchOpsImpl{g, t, "", 1}, "")
+	go db.FetchOps(&fetchOpsImpl{g, t, "", 1}, "")
 	return nil, nil
 }
 func (g *GomahawkImpl) NewDBConnectionRequested(t gomahawk.Tomahawk, db gomahawk.DBConnection) (gomahawk.DBConnection, error) {

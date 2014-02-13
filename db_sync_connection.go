@@ -80,6 +80,10 @@ func (d *dBConn) handleMsg(m *msg.Msg) error {
 		command, err := d.commandProcessor.ParseCommand(m)
 
 		if err != nil {
+			if nerr, ok := err.(msg.NotRegisteredError) ; ok {
+				log.Println(nerr)
+				return nil
+			}
 			return err
 		}
 

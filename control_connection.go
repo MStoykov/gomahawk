@@ -65,18 +65,12 @@ func newControlConnection(g Gomahawk, cm *connectionManager, conn *connection, i
 
 	c.id = id
 
-	go func() {
-		for {
-			m, err := c.ReadMsg() // handle err
-			err = c.handleMsg(m)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-		}
-	}()
+	c.msgHandler = c.handleMsg
 
+	c.StartHandelingMessages()
 	c.setupPingTimer()
+
+	go c.sendDBSyncOffer()
 
 	return c, nil
 }
