@@ -8,6 +8,32 @@ Install
 
 	go get github.com/MStoykov/gomahawk
 
+Features                                                                                                                                                                            
+========                                                                                                                                                                            
+                                                                                                                                                                                    
+Done                                                                                                                                                                                
+----                                                                                                                                                                                
+                                                                                                                                                                                    
+* Advertising the instance                                                                                                                                                          
+* Incoming connections                                                                                                                                                              
+* Request for DBConnection                                                                                                                                                          
+* Request for StreamConnection                                                                                                                                                      
+* All the Documented dbsync commands                                                                                                                                                
+                                                                                                                                                                                    
+                                                                                                                                                                                    
+Planned                                                                                                                                                                             
+-------                                                                                                                                                                             
+                                                                                                                                                                                    
+* Listen for advertising                                                                                                                                                            
+* Making ControlConnections                                                                                                                                                         
+* Reverse Connections (Requests for connections and Answering Requests)                                                                                                             
+* Answering DBConnection requests                                                                                                                                                   
+* DBsync from us to the opposite side                                                                                                                                               
+* Answering StreamConnections                                                                                                                                                       
+* Basic implementations for some parts needed for the client of gomahawk       
+	* InMemory searchable database for remote instances
+	* etc.
+* Implementing the nondocumented dbsync commands
 
 Usage 
 =====
