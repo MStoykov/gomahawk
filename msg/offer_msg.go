@@ -27,7 +27,7 @@ func ParseOffer(msg *Msg) (*OfferMsg, error) {
 
 // Make new Msg that contains a Request for a File with the given id from the
 // given control id
-func NewFileRequestOffer(fileId int64, controlid string) (*Msg, error) {
+func NewFileRequestOffer(fileId int64, controlid string) *Msg {
 	o := &OfferMsg{
 		"accept-offer",
 		"FILE_REQUEST_KEY:" + strconv.FormatInt(fileId, 10),
@@ -36,10 +36,20 @@ func NewFileRequestOffer(fileId int64, controlid string) (*Msg, error) {
 		0,
 	}
 
-	r, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
+	r, _ := json.Marshal(o)
+
+	return NewMsg(r, SETUP|JSON)
+}
+
+func NewSecondaryOffer(controlid, offerId string, port int) *Msg {
+	o := OfferMsg{
+		Conntype:  "accept-offer",
+		ControlId: controlid,
+		Key:       offerId,
+		Port:      port,
 	}
 
-	return NewMsg(r, SETUP), nil
+	r, _ := json.Marshal(o)
+
+	return NewMsg(r, SETUP|JSON)
 }

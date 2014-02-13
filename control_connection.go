@@ -30,10 +30,7 @@ func (c *controlConnection) UUID() string {
 }
 
 func (t *controlConnection) RequestStreamConnection(id int64) (StreamConnection, error) {
-	offerMsg, err := msg.NewFileRequestOffer(id, t.id)
-	if err != nil {
-		return nil, err
-	}
+	offerMsg := msg.NewFileRequestOffer(id, t.id)
 	conn, err := t.cm.copyConnection(t.connection)
 	if err != nil {
 		return nil, err

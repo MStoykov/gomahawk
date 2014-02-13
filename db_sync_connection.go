@@ -9,13 +9,6 @@ import (
 	msg "github.com/MStoykov/gomahawk/msg"
 )
 
-type secondaryOffer struct {
-	ConnType  string `json:"conntype"`  // "conntype": "accept-offer"
-	ControlId string `json:"controlid"` //"controlid": "66bd135d-113f-481a-977e-111111111111",
-	Key       string `json:"key"`       //"key": KEY,
-	Port      int    `json:"port"`      // "port": 50210
-}
-
 type fetchOpsMethodMsg struct {
 	Method string `json:"method"` // method: fetchOps
 	Lastop string `json:"lastop"` // lastop :"66bd135d-113f-481a-977e-111111111111"
@@ -88,21 +81,9 @@ func openNewDBConn(offer *msg.DBsyncOffer, conn *connection, controlid string) (
 	d.connection = conn
 	d.commandProcessor = msg.NewCommandParser()
 
-	dbsecondaryoffer := secondaryOffer{
-		"accept-offer",
-		controlid,
-		offer.Key,
-		50210, //hardcoded
-	}
-	offerBytes, err := json.Marshal(dbsecondaryoffer)
-
-	if err != nil {
-		log.Println("error while marshaling offer", err)
-		return nil, err
-	}
-	m := msg.NewMsg(offerBytes, msg.SETUP|msg.JSON)
+	m := msg.NewSecondaryOffer(controlid, offer.Key, 50210)
 	log.Println("gonna send msg", m)
-	_, err = d.conn.Write(m.Bytes())
+	_, err := d.conn.Write(m.Bytes())
 	if err != nil {
 		log.Println("error while sending offer on dbconnection")
 		return nil, err
