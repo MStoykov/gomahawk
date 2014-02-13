@@ -15,19 +15,19 @@ func ParseDBSyncOffer(msg *Msg) (*DBsyncOffer, error) {
 	offer := new(DBsyncOffer)
 	err := json.Unmarshal(msg.payload, offer)
 	if err != nil {
-		offer = nil
+		return nil, err
 	}
 	if offer.Method != "dbsync-offer" {
 		return nil, errors.New("not DBSYNCOFFER")
 	}
 
-	return offer, err
+	return offer, nil
 }
 
 func NewDBSyncOfferMsg(key string) (m *Msg) {
-	offer := DBsyncOffer {
-		Method:"dbsync-offer",
-		Key: key,
+	offer := DBsyncOffer{
+		Method: "dbsync-offer",
+		Key:    key,
 	}
 	offerBytes, _ := json.Marshal(offer)
 

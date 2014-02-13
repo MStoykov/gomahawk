@@ -1,5 +1,9 @@
 package msg
 
+import (
+	"encoding/json"
+)
+
 // Generic command
 type command struct {
 	Command string `json:"command"` // "command" : "logplayback",
@@ -11,4 +15,18 @@ func (c *command) GetCommand() string {
 }
 func (c *command) GetGuid() string {
 	return c.Guid
+}
+
+func WrapCommand(c Command, islast bool) *Msg {
+	b, err := json.Marshal(c)
+	if err != nil {
+		panic(err)
+	}
+
+	var flags byte = DBOP | JSON
+	if !islast {
+		flags |= FRAGMENT
+	}
+	return NewMsg(b, flags)
+
 }

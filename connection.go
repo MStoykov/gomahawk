@@ -12,6 +12,22 @@ import (
 type connection struct {
 	conn io.ReadWriteCloser
 	*msg.OfferMsg
+	msgHandler func(*msg.Msg) error
+	lastError  error
+}
+
+func (c *connection) StartHandelingMessages() {
+	go func() { // do it with select and checking whether msgHandler is not nil
+		for {
+			m, err := c.ReadMsg()
+			err = c.msgHandler(m)
+			if err != nil {
+				c.lastError = err
+				return
+			}
+		}
+
+	}()
 }
 
 func (c *connection) ReadMsg() (*msg.Msg, error) {
@@ -83,10 +99,10 @@ func (c *connection) sendVersionCheck() error {
 
 type secondaryConnection struct {
 	*connection
-	parent *connection
+	parent *controlConnection
 }
 
-func newSecondaryConnection(connection *connection, parent *connection) (*secondaryConnection, error) {
+func newSecondaryConnection(connection *connection, parent *controlConnection) (*secondaryConnection, error) {
 	c := new(secondaryConnection)
 	c.connection = connection
 	c.parent = parent

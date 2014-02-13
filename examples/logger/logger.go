@@ -47,7 +47,7 @@ type fetchOpsImpl struct {
 }
 
 func (l *fetchOpsImpl) SendCommand(command msg.Command) error {
-	log.Println("command receiverd : ", command)	
+	log.Println("command receiverd : ", command)
 	l.last = command.GetGuid()
 	return nil
 }

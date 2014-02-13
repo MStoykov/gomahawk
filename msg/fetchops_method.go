@@ -2,9 +2,10 @@ package msg
 
 import(
 	"encoding/json"
+	"errors"
 )
 type fetchOpsMethod struct {
-	Method string `json:"method"` // method: fetchOps
+	Method string `json:"method"` // method: fetchops
 	LastOp string `json:"lastop"` // lastop :"66bd135d-113f-481a-977e-111111111111"
 }
 
@@ -23,6 +24,10 @@ func GetOpFromFetchOpsMsg(m *Msg) (string, error) {
 	err := json.Unmarshal(m.payload, f)
 	if err != nil {
 		return "", err
+	}
+
+	if f.Method != "fetchops" {
+		return "", errors.New("not fetchosp method")
 	}
 
 	return f.LastOp, nil

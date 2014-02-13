@@ -11,7 +11,7 @@ type streamConn struct {
 	stream chan []byte
 }
 
-func openNewStreamConnection(id int64, c *connection, parent *connection, offerMsg *msg.Msg) (*streamConn, error) {
+func openNewStreamConnection(id int64, c *connection, parent *controlConnection, offerMsg *msg.Msg) (*streamConn, error) {
 
 	conn := new(streamConn)
 	conn.connection = c

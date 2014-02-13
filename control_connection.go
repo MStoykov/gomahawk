@@ -35,7 +35,7 @@ func (t *controlConnection) RequestStreamConnection(id int64) (StreamConnection,
 		return nil, err
 	}
 
-	sc, err := openNewStreamConnection(id, conn, t.connection, offerMsg)
+	sc, err := openNewStreamConnection(id, conn, t, offerMsg)
 
 	if err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func (c *controlConnection) setupPingTimer() {
 }
 
 func (c *controlConnection) AddConnection(conn *connection) error {
-	sc, err := newSecondaryConnection(conn, c.connection)
+	sc, err := newSecondaryConnection(conn, c)
 	if err != nil {
 		return err
 	}
@@ -108,11 +108,13 @@ func (c *controlConnection) AddConnection(conn *connection) error {
 	c.idbConn = dbConn
 
 	twin, err := c.g.NewDBConnection(c, c.idbConn)
-	log.Println(twin)
 	if err != nil {
-		dbConn.Close()
+		c.idbConn.Close()
+		c.idbConn = nil
 		return err
 	}
+	c.idbConn.dbconn = twin
+	c.idbConn.StartHandelingMessages()
 
 	return nil
 }
