@@ -25,7 +25,7 @@ func (c *connection) receiveOffer() error {
 		return err
 	}
 	c.OfferMsg = offer
-	if err := c.sendversionCheck(); err != nil {
+	if err := c.sendVersionCheck(); err != nil {
 		log.Println("versionCheck sending failed for ", offer)
 
 		c.conn.Close()
@@ -72,7 +72,7 @@ func (c *connection) Close() error {
 	return c.conn.Close()
 }
 
-func (c *connection) sendversionCheck() error {
+func (c *connection) sendVersionCheck() error {
 	m := msg.NewMsg([]byte{'4'}, msg.SETUP)
 	_, err := c.conn.Write(m.Bytes())
 	if err != nil {
