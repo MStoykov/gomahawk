@@ -69,6 +69,11 @@ func (g *gomahawkServerImpl) newConnectionCallback(tcpConn *net.TCPConn) (err er
 		return err
 
 	}
+
+	return g.handleConnection(conn)
+}
+
+func (g *gomahawkServerImpl) handleConnection(conn *connection) (err error) {
 	if conn.NodeId == "" && conn.ControlId != "" {
 		for _, tomahawk := range g.tomahawks {
 			if tomahawk.NodeId == conn.ControlId {

@@ -10,6 +10,7 @@ import (
 )
 
 type connection struct {
+	stop chan struct{}
 	conn io.ReadWriteCloser
 	*msg.OfferMsg
 	msgHandler func(*msg.Msg) error
@@ -18,16 +19,32 @@ type connection struct {
 
 func (c *connection) StartHandelingMessages() {
 	go func() { // do it with select and checking whether msgHandler is not nil
-		for {
-			m, err := c.ReadMsg()
+		asyncReadMsg := func(messages chan *msg.Msg) {
+			message, err := c.ReadMsg()
 			if err != nil {
 				c.lastError = err
+				close(c.stop)
 				return
 			}
-			err = c.msgHandler(m)
-			if err != nil {
-				c.lastError = err
+			messages <- message
+		}
+
+		messages := make(chan *msg.Msg)
+		go asyncReadMsg(messages)
+		for {
+			select {
+			case <-c.stop:
+				if c.lastError != nil {
+					log.Println(c.OfferMsg, "stopped with error", c.lastError)
+				}
 				return
+			case message := <-messages:
+				err := c.msgHandler(message)
+				if err != nil {
+					c.lastError = err
+					return
+				}
+				go asyncReadMsg(messages)
 			}
 		}
 
@@ -96,6 +113,7 @@ func (c *connection) sendOffer(offer *msg.Msg) error {
 }
 
 func (c *connection) Close() error {
+	close(c.stop)
 	return c.conn.Close()
 }
 

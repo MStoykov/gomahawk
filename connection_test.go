@@ -74,26 +74,29 @@ var _ = Describe("Connection", func() {
 	})
 
 	Context("With two connected connections", func() {
-		It("SendOffer and ReceiveOffer will work against one another", func() {
-			var connections [2]*connection
-			connections[0] = new(connection)
-			connections[1] = new(connection)
-			connections[0].conn, connections[1].conn = newDoubleFakeConn()
-			c := make(chan string)
-			offer := msg.NewFileRequestOffer(10, "someid")
-			go func() {
-				err := connections[0].receiveOffer()
-				Expect(err).ToNot(HaveOccurred())
-				c <- "Done"
-			}()
-			go func() {
-				err := connections[1].sendOffer(offer)
-				Expect(err).ToNot(HaveOccurred())
-				c <- "Done"
-			}()
+		var offerPairing = func(offer *msg.Msg, name string) {
+			It("SendOffer and ReceiveOffer will work against one another for"+name, func() {
+				var connections [2]*connection
+				connections[0] = new(connection)
+				connections[1] = new(connection)
+				connections[0].conn, connections[1].conn = newDoubleFakeConn()
+				c := make(chan string)
+				go func() {
+					err := connections[0].receiveOffer()
+					Expect(err).ToNot(HaveOccurred())
+					c <- "Done"
+				}()
+				go func() {
+					err := connections[1].sendOffer(offer)
+					Expect(err).ToNot(HaveOccurred())
+					c <- "Done"
+				}()
 
-			Expect(<-c).To(Equal("Done"))
-			Expect(<-c).To(Equal("Done"))
-		})
+				Expect(<-c).To(Equal("Done"))
+				Expect(<-c).To(Equal("Done"))
+			})
+		}
+		offerPairing(msg.NewFileRequestOffer(10, "someid"), "StreamConnection")
+		offerPairing(msg.NewSecondaryOffer("someid", "otherid", 11111), "Random Secondary Connection")
 	})
 })
