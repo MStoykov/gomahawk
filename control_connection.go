@@ -11,7 +11,6 @@ import (
 type controlConnection struct {
 	g Gomahawk
 	*connection
-	id        string
 	lastPing  time.Time
 	pingTimer *time.Timer
 	idbConn   *dBConn
@@ -21,21 +20,21 @@ type controlConnection struct {
 }
 
 func (c *controlConnection) Name() string {
-	return c.id
+	return c.NodeId
 }
 
 func (c *controlConnection) UUID() string {
-	return c.id
+	return c.NodeId
 }
 
-func (t *controlConnection) RequestStreamConnection(id int64) (StreamConnection, error) {
-	offerMsg := msg.NewFileRequestOffer(id, t.id)
-	conn, err := t.cm.copyConnection(t.connection)
+func (c *controlConnection) RequestStreamConnection(id int64) (StreamConnection, error) {
+	offerMsg := msg.NewFileRequestOffer(id, c.NodeId)
+	conn, err := c.cm.copyConnection(c.connection)
 	if err != nil {
 		return nil, err
 	}
 
-	sc, err := openNewStreamConnection(id, conn, t, offerMsg)
+	sc, err := openNewStreamConnection(id, conn, c, offerMsg)
 
 	if err != nil {
 		return nil, err
@@ -52,18 +51,15 @@ func (c *controlConnection) LastPing() time.Time {
 
 }
 func (c *controlConnection) sendPing() error {
-	_, err := msg.MakePingMsg().WriteTo(c.conn)
-	return err
+	return c.WriteMsg(msg.MakePingMsg())
 }
 
-func newControlConnection(g Gomahawk, cm *connectionManager, conn *connection, id string) (*controlConnection, error) {
+func newControlConnection(g Gomahawk, cm *connectionManager, conn *connection) (*controlConnection, error) {
 	c := new(controlConnection)
 	c.cm = cm
 
 	c.g = g
 	c.connection = conn
-
-	c.id = id
 
 	c.msgHandler = c.handleMsg
 
@@ -88,12 +84,7 @@ func (c *controlConnection) setupPingTimer() {
 }
 
 func (c *controlConnection) AddConnection(conn *connection) error {
-	sc, err := newSecondaryConnection(conn, c)
-	if err != nil {
-		return err
-	}
-
-	dbConn, err := newDBConn(sc)
+	dbConn, err := newDBConn(newSecondaryConnection(conn, c))
 
 	if err != nil {
 		return err
@@ -118,8 +109,7 @@ func (c *controlConnection) sendDBSyncOffer() error {
 	c.dbsyncKey = uuid.String()
 
 	offer := msg.NewDBSyncOfferMsg(c.dbsyncKey)
-	_, err := offer.WriteTo(c.conn)
-	return err
+	return c.WriteMsg(offer)
 }
 
 func (c *controlConnection) handleMsg(m *msg.Msg) error {
@@ -130,13 +120,12 @@ func (c *controlConnection) handleMsg(m *msg.Msg) error {
 
 	dbsyncOffer, err := msg.ParseDBSyncOffer(m)
 	if err == nil {
-		log.Println("we got offer for DBSYNC ", dbsyncOffer)
 		conn, err := c.cm.copyConnection(c.connection)
 		if err != nil {
 			return err
 		}
 
-		c.odbConn, err = openNewDBConn(dbsyncOffer, conn, c.id)
+		c.odbConn, err = openNewDBConn(dbsyncOffer, conn, c.NodeId)
 		if err != nil {
 			return err
 		}

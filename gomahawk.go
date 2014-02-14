@@ -13,7 +13,6 @@ package gomahawk
 import (
 	"errors"
 	"net"
-	//"time"
 )
 
 var (

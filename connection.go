@@ -34,13 +34,18 @@ func (c *connection) StartHandelingMessages() {
 	}()
 }
 
+func (c *connection) WriteMsg(message *msg.Msg) error {
+	_, err := message.WriteTo(c.conn) // actually handle error ?
+	return err
+}
+
 func (c *connection) ReadMsg() (*msg.Msg, error) {
 	return msg.ReadMSG(c.conn)
 }
 
 func (c *connection) receiveOffer() error {
-	m, err := c.ReadMsg()
-	offer, err := msg.ParseOffer(m)
+	message, err := c.ReadMsg()
+	offer, err := msg.ParseOffer(message)
 	if err != nil {
 		return err
 	}
@@ -52,8 +57,8 @@ func (c *connection) receiveOffer() error {
 		return err
 	}
 
-	m, err = c.ReadMsg()
-	if !m.IsSetup() || !bytes.Equal(m.Payload(), []byte("ok")) {
+	message, err = c.ReadMsg()
+	if !message.IsSetup() || !bytes.Equal(message.Payload(), []byte("ok")) {
 		log.Println("the version was not ok with the remote for ", offer)
 		c.conn.Close()
 
@@ -64,24 +69,26 @@ func (c *connection) receiveOffer() error {
 }
 
 func (c *connection) sendOffer(offer *msg.Msg) error {
-	_, err := offer.WriteTo(c.conn)
-	if err != nil {
+	if err := c.WriteMsg(offer); err != nil {
 		c.conn.Close()
 		return err
 	}
 
-	m, err := c.ReadMsg()
-	if !m.IsSetup() || string(m.Payload()) != "4" {
+	message, err := c.ReadMsg()
+	if err != nil {
+		return err
+	}
+
+	if !message.IsSetup() || string(message.Payload()) != "4" {
 		log.Println("We didn't get versionCheck")
-		log.Println("We got", m)
+		log.Println("We got", message)
 		c.conn.Close()
 		return errors.New("VersionCheck failed")
 	}
 
-	m = msg.NewMsg([]byte("ok"), msg.SETUP)
+	message = msg.NewMsg([]byte("ok"), msg.SETUP)
 
-	_, err = m.WriteTo(c.conn)
-	if err != nil {
+	if err = c.WriteMsg(message); err != nil {
 		return err
 	}
 
@@ -93,12 +100,8 @@ func (c *connection) Close() error {
 }
 
 func (c *connection) sendVersionCheck() error {
-	m := msg.NewMsg([]byte{'4'}, msg.SETUP)
-	_, err := m.WriteTo(c.conn)
-	if err != nil {
-		return err
-	}
-	return nil
+	message := msg.NewMsg([]byte{'4'}, msg.SETUP)
+	return c.WriteMsg(message)
 }
 
 type secondaryConnection struct {
@@ -106,9 +109,9 @@ type secondaryConnection struct {
 	parent *controlConnection
 }
 
-func newSecondaryConnection(connection *connection, parent *controlConnection) (*secondaryConnection, error) {
-	c := new(secondaryConnection)
-	c.connection = connection
-	c.parent = parent
-	return c, nil
+func newSecondaryConnection(connection *connection, parent *controlConnection) *secondaryConnection {
+	return &secondaryConnection{
+		connection: connection,
+		parent:     parent,
+	}
 }

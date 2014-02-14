@@ -19,7 +19,7 @@ Done
 * Request for DBConnection                                                                                                                                                          
 * Request for StreamConnection                                                                                                                                                      
 * All the Documented dbsync commands                                                                                                                                                
-                                                                                                                                                                                    
+* DBsync from us to the opposite side                                                                                                                                               
                                                                                                                                                                                     
 Planned                                                                                                                                                                             
 -------                                                                                                                                                                             
@@ -28,7 +28,6 @@ Planned
 * Making ControlConnections                                                                                                                                                         
 * Reverse Connections (Requests for connections and Answering Requests)                                                                                                             
 * Answering DBConnection requests                                                                                                                                                   
-* DBsync from us to the opposite side                                                                                                                                               
 * Answering StreamConnections                                                                                                                                                       
 * Basic implementations for some parts needed for the client of gomahawk       
 	* InMemory searchable database for remote instances

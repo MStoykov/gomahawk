@@ -7,19 +7,19 @@ import (
 )
 
 type connectionManager struct {
-	m map[*connection]*net.TCPConn
+	connections map[*connection]*net.TCPConn
 	sync.Mutex
 }
 
 func newConnectionManager() *connectionManager {
 	cm := new(connectionManager)
-	cm.m = make(map[*connection]*net.TCPConn)
+	cm.connections = make(map[*connection]*net.TCPConn)
 	return cm
 
 }
 
 func (cm *connectionManager) copyConnection(conn *connection) (*connection, error) {
-	tcpConn, ok := cm.m[conn]
+	tcpConn, ok := cm.connections[conn]
 	if !ok {
 		return nil, errors.New("not registered connection tried to be copied")
 	}
@@ -40,14 +40,14 @@ func (cm *connectionManager) copyConnection(conn *connection) (*connection, erro
 		return nil, err
 	}
 
-	return cm.newConnection(newTCPConn)
+	return cm.registerConnection(newTCPConn), nil
 }
 
-func (cm *connectionManager) newConnection(tcpConn *net.TCPConn) (*connection, error) {
+func (cm *connectionManager) registerConnection(tcpConn *net.TCPConn) (conn *connection) {
 	cm.Lock()
 	defer cm.Unlock()
-	c := new(connection)
-	c.conn = tcpConn
-	cm.m[c] = tcpConn
-	return c, nil
+	conn = new(connection)
+	conn.conn = tcpConn
+	cm.connections[conn] = tcpConn
+	return conn
 }

@@ -3,7 +3,6 @@ package gomahawk
 import (
 	"bytes"
 	"errors"
-	"io"
 	"log"
 
 	msg "github.com/MStoykov/gomahawk/msg"
@@ -15,9 +14,7 @@ func (d *dBConn) Trigger() error {
 
 // request changes after given id. "" means all
 func (d *dBConn) sendFetchOps(id string) error {
-	m := msg.NewFetchOpsMsg(id)
-	_, err := m.WriteTo(d.conn)
-	return err
+	return d.WriteMsg(msg.NewFetchOpsMsg(id))
 }
 
 type dBConn struct {
@@ -45,10 +42,8 @@ func openNewDBConn(offer *msg.DBsyncOffer, conn *connection, controlid string) (
 	d.connection = conn
 	d.commandProcessor = msg.NewCommandParser()
 
-	m := msg.NewSecondaryOffer(controlid, offer.Key, 50210)
-	log.Println("gonna send msg", m)
-	_, err := m.WriteTo(d.conn)
-	if err != nil {
+	message := msg.NewSecondaryOffer(controlid, offer.Key, 50210)
+	if err := d.WriteMsg(message); err != nil {
 		log.Println("error while sending offer on dbconnection")
 		return nil, err
 	}
@@ -63,21 +58,21 @@ func (d *dBConn) FetchOps(fom msg.FetchOpsMethod, id string) error {
 	return d.sendFetchOps(id)
 }
 
-func (d *dBConn) handleMsg(m *msg.Msg) error {
-	if m.IsDBOP() {
+func (d *dBConn) handleMsg(message *msg.Msg) error {
+	if message.IsDBOP() {
 		if d.fom == nil {
 			return errors.New("Got DBOP but no FetchOpsMethod")
 		}
 
-		if !m.IsJSON() { // 'ok' ?
-			if bytes.Equal(m.Payload(), []byte("ok")) {
+		if !message.IsJSON() { // 'ok' ?
+			if bytes.Equal(message.Payload(), []byte("ok")) {
 				return d.fom.Close()
 			} else {
-				return errors.New("Got DBOP that's JSON but not 'ok' :\n" + m.String())
+				return errors.New("Got DBOP that's JSON but not 'ok' :\n" + message.String())
 			}
 		}
 
-		command, err := d.commandProcessor.ParseCommand(m)
+		command, err := d.commandProcessor.ParseCommand(message)
 
 		if err != nil {
 			if nerr, ok := err.(msg.NotRegisteredError); ok {
@@ -89,48 +84,49 @@ func (d *dBConn) handleMsg(m *msg.Msg) error {
 
 		err = d.fom.SendCommand(command)
 
-		if !m.IsFragment() {
+		if !message.IsFragment() {
 			return d.fom.Close()
 		}
 
 		return err
 	}
 
-	op, err := msg.GetOpFromFetchOpsMsg(m)
+	op, err := msg.GetOpFromFetchOpsMsg(message)
 
 	if err == nil {
 		if d.dbconn != nil {
-			return d.dbconn.FetchOps(newDummyFetchOps(d.conn), op)
+			return d.dbconn.FetchOps(newDummyFetchOps(d.connection), op)
 		} else {
-			_, err := msg.NewMsg([]byte("ok"), msg.DBOP).WriteTo(d.conn)
-			return err
+			return d.WriteMsg(msg.NewMsg([]byte("ok"), msg.DBOP))
 		}
 	}
-	if msg.IsTrigger(m) {
+
+	if msg.IsTrigger(message) {
 		if d.dbconn != nil {
 			return d.dbconn.Trigger()
 		}
 
 		return nil
 	}
+	log.Println("unhandled message received on a DBConnection\n", message)
 
 	return nil
 }
 
 type DummyFetchOps struct {
 	lastCommand msg.Command
-	writer      io.Writer
+	conn        *connection
 }
 
-func newDummyFetchOps(writer io.Writer) msg.FetchOpsMethod {
+func newDummyFetchOps(conn *connection) msg.FetchOpsMethod {
 	return &DummyFetchOps{
-		writer: writer,
+		conn: conn,
 	}
 }
 
 func (d *DummyFetchOps) SendCommand(command msg.Command) (err error) {
 	if d.lastCommand != nil {
-		_, err = msg.WrapCommand(d.lastCommand, false).WriteTo(d.writer)
+		err = d.conn.WriteMsg(msg.WrapCommand(d.lastCommand, false))
 	}
 
 	d.lastCommand = command
@@ -140,9 +136,9 @@ func (d *DummyFetchOps) SendCommand(command msg.Command) (err error) {
 
 func (d *DummyFetchOps) Close() (err error) {
 	if d.lastCommand != nil {
-		_, err = msg.WrapCommand(d.lastCommand, false).WriteTo(d.writer)
+		err = d.conn.WriteMsg(msg.WrapCommand(d.lastCommand, false))
 	} else {
-		_, err = msg.NewMsg([]byte("ok"), msg.SETUP).WriteTo(d.writer)
+		err = d.conn.WriteMsg(msg.NewMsg([]byte("ok"), msg.SETUP))
 	}
 
 	return

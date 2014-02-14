@@ -1,6 +1,7 @@
 package gomahawk
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -11,34 +12,30 @@ import (
 )
 
 type gomahawkServerImpl struct {
-	g           Gomahawk
-	uuid        *gouuid.UUID
-	advertisers []udp.Advertiser
-	listeners   []*tcpListener
-	tomahawks   []*tomahawkImpl
-	mutex       sync.Mutex
-	cm          *connectionManager
+	gomahawk          Gomahawk
+	uuid              *gouuid.UUID
+	advertisers       []udp.Advertiser
+	listeners         []*tcpListener
+	tomahawks         []*tomahawkImpl
+	mutex             sync.Mutex
+	connectionManager *connectionManager
 }
 
 // returns new instance of Gomahawk
-func NewGomahawkServer(g Gomahawk) (result GomahawkServer, err error) {
-	gs := new(gomahawkServerImpl)
-	gs.g = g
-	err = gs.InitUUID()
+func NewGomahawkServer(gomahawk Gomahawk) (result GomahawkServer, err error) {
+	g := new(gomahawkServerImpl)
+	g.gomahawk = gomahawk
+	g.connectionManager = newConnectionManager()
+	err = g.InitUUID()
 	if err == nil {
-		result = gs
+		result = g
 	}
 
-	gs.cm = newConnectionManager()
-
-	if err != nil {
-		log.Printf("error whie initializing ConnectionManager : %s", err)
-	}
 	return
 }
 
 func (g *gomahawkServerImpl) Name() string {
-	return g.g.Name()
+	return g.gomahawk.Name()
 }
 
 func (g *gomahawkServerImpl) String() string {
@@ -46,7 +43,6 @@ func (g *gomahawkServerImpl) String() string {
 }
 
 func (g *gomahawkServerImpl) InitUUID() error {
-	log.Printf("%s.InitUUID()", g)
 	uuid, err := gouuid.NewV5(gouuid.NamespaceURL, []byte(g.Name()))
 	if err != nil {
 		return err
@@ -57,43 +53,37 @@ func (g *gomahawkServerImpl) InitUUID() error {
 	return nil
 }
 
-func (g *gomahawkServerImpl) newConnectionCallback(conn *net.TCPConn) error {
-	log.Println("newConnectionCallback(", conn, ")")
-	if !g.g.ConnectionIsRequested(conn.RemoteAddr()) {
-		conn.Close() // We don't wanna speak with this one
+func (g *gomahawkServerImpl) newConnectionCallback(tcpConn *net.TCPConn) (err error) {
+	if !g.gomahawk.ConnectionIsRequested(tcpConn.RemoteAddr()) {
+		tcpConn.Close() // We don't wanna speak with this one
 		return nil
 	}
 
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
 
-	c, err := g.cm.newConnection(conn)
+	conn := g.connectionManager.registerConnection(tcpConn)
 
-	if err != nil {
-		conn.Close()
+	if err = conn.receiveOffer(); err != nil {
+		tcpConn.Close()
 		return err
 
 	}
-	err = c.receiveOffer()
-	if err != nil {
-		conn.Close()
-		return err
-
-	}
-	if c.NodeId == "" && c.ControlId != "" {
+	if conn.NodeId == "" && conn.ControlId != "" {
 		for _, tomahawk := range g.tomahawks {
-			if tomahawk.NodeId == c.ControlId {
-				log.Printf("adding conn [%s] to Tomahawk[%s]", c, tomahawk)
-				tomahawk.AddConnection(c)
+			if tomahawk.NodeId == conn.ControlId {
+				tomahawk.AddConnection(conn)
 				return nil
 			}
 		}
-	} else if c.NodeId != "" && c.ControlId == "" {
-		cc, err := newControlConnection(g.g, g.cm, c, c.NodeId)
+		return fmt.Errorf("A connection that looks like secondary but we don't know about it's Control Connection %s", conn.OfferMsg)
+	} else if conn.NodeId != "" && conn.ControlId == "" {
+		cc, err := newControlConnection(g.gomahawk, g.connectionManager, conn)
 		if err != nil {
-			c.Close()
+			conn.Close()
 			return err
 		}
+
 		newTomahawk, err := newTomahawk(cc)
 
 		if err != nil {
@@ -101,12 +91,14 @@ func (g *gomahawkServerImpl) newConnectionCallback(conn *net.TCPConn) error {
 		}
 
 		g.tomahawks = append(g.tomahawks, newTomahawk)
+	} else {
+		return fmt.Errorf("Unhandled connection that is neither control nor secondary %s", conn.OfferMsg)
 	}
 
 	return nil
 }
 
-func (g *gomahawkServerImpl) ListenTo(ip net.IP, port int) error {
+func (g *gomahawkServerImpl) ListenTo(ip net.IP, port int) (err error) {
 	log.Printf("%s.ListenTo(%s, %s)", g, ip, port)
 	listener, err := newTCPListener(ip, port, g.newConnectionCallback)
 	if err != nil {
@@ -131,9 +123,8 @@ func (g *gomahawkServerImpl) AdvertiseEvery(seconds int) {
 	}
 }
 
-func (g *gomahawkServerImpl) Start() error {
+func (g *gomahawkServerImpl) Start() (err error) {
 	log.Printf("%s.Start()", g)
-	var err error
 	for _, advertiser := range g.advertisers {
 		if err = advertiser.Start(); err != nil {
 			return err
@@ -151,9 +142,10 @@ func (g *gomahawkServerImpl) Start() error {
 func (g *gomahawkServerImpl) GetTomahawks() []Tomahawk {
 	var result []Tomahawk = make([]Tomahawk, len(g.tomahawks))
 
-	for i, tomahawk := range g.tomahawks {
-		result[i] = tomahawk
+	for index, tomahawk := range g.tomahawks {
+		result[index] = tomahawk
 	}
+
 	return result
 }
 
