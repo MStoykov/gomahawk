@@ -33,3 +33,16 @@ func NewDBSyncOfferMsg(key string) (m *Msg) {
 
 	return NewMsg(offerBytes, SETUP|JSON)
 }
+
+func IsTrigger(msg *Msg) bool {
+	if msg.IsJSON() {
+		msg.Uncompress()
+		var m map[string]string
+		if err := json.Unmarshal(msg.payload, &m); err != nil {
+			return false
+		}
+
+		return len(m) == 1 && m["method"] == "trigger"
+	}
+	return false
+}

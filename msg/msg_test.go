@@ -45,4 +45,14 @@ var _ = Describe("Msg", func() {
 			Expect(buf.Bytes()).To(Equal(getFixture("addfiles.msg")))
 		})
 	})
+
+	Context("Parsing a trigger msg", func() {
+		BeforeEach(func() {
+			msg = NewMsg([]byte(`{"method":"trigger"}`), JSON)
+		})
+
+		It("IsTrigger returns true", func() {
+			Expect(IsTrigger(msg)).To(BeTrue())
+		})
+	})
 })

@@ -1,9 +1,9 @@
 package gomahawk
 
 import (
-"io"
 	"bytes"
 	"errors"
+	"io"
 	"log"
 
 	msg "github.com/MStoykov/gomahawk/msg"
@@ -33,7 +33,7 @@ func newDBConn(conn *secondaryConnection) (*dBConn, error) {
 	d.secondaryConnection = conn
 	d.commandProcessor = msg.NewCommandParser()
 
-	d.msgHandler =d.handleMsg
+	d.msgHandler = d.handleMsg
 
 	return d, nil
 }
@@ -53,7 +53,7 @@ func openNewDBConn(offer *msg.DBsyncOffer, conn *connection, controlid string) (
 		return nil, err
 	}
 
-	d.msgHandler =d.handleMsg
+	d.msgHandler = d.handleMsg
 
 	return d, nil
 }
@@ -80,7 +80,7 @@ func (d *dBConn) handleMsg(m *msg.Msg) error {
 		command, err := d.commandProcessor.ParseCommand(m)
 
 		if err != nil {
-			if nerr, ok := err.(msg.NotRegisteredError) ; ok {
+			if nerr, ok := err.(msg.NotRegisteredError); ok {
 				log.Println(nerr)
 				return nil
 			}
@@ -102,22 +102,28 @@ func (d *dBConn) handleMsg(m *msg.Msg) error {
 		if d.dbconn != nil {
 			return d.dbconn.FetchOps(newDummyFetchOps(d.conn), op)
 		} else {
-			_, err := msg.NewMsg([]byte("ok"), msg.SETUP).WriteTo(d.conn)
+			_, err := msg.NewMsg([]byte("ok"), msg.DBOP).WriteTo(d.conn)
 			return err
 		}
+	}
+	if msg.IsTrigger(m) {
+		if d.dbconn != nil {
+			return d.dbconn.Trigger()
+		}
+
+		return nil
 	}
 
 	return nil
 }
 
-
-type DummyFetchOps struct{
+type DummyFetchOps struct {
 	lastCommand msg.Command
-	writer io.Writer
+	writer      io.Writer
 }
 
 func newDummyFetchOps(writer io.Writer) msg.FetchOpsMethod {
-	return &DummyFetchOps {
+	return &DummyFetchOps{
 		writer: writer,
 	}
 }
@@ -132,7 +138,7 @@ func (d *DummyFetchOps) SendCommand(command msg.Command) (err error) {
 	return
 }
 
-func (d *DummyFetchOps) Close() (err error){
+func (d *DummyFetchOps) Close() (err error) {
 	if d.lastCommand != nil {
 		_, err = msg.WrapCommand(d.lastCommand, false).WriteTo(d.writer)
 	} else {

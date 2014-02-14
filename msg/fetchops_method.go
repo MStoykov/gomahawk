@@ -1,20 +1,21 @@
 package msg
 
-import(
+import (
 	"encoding/json"
 	"errors"
 )
+
 type fetchOpsMethod struct {
 	Method string `json:"method"` // method: fetchops
 	LastOp string `json:"lastop"` // lastop :"66bd135d-113f-481a-977e-111111111111"
 }
 
-func NewFetchOpsMsg(op string) *Msg{
+func NewFetchOpsMsg(op string) *Msg {
 	f := fetchOpsMethod{
-		Method:"fetchops",
+		Method: "fetchops",
 		LastOp: op,
 	}
-	b, _ :=	json.Marshal(f)
+	b, _ := json.Marshal(f)
 
 	return NewMsg(b, JSON)
 }
