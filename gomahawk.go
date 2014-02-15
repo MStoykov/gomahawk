@@ -53,6 +53,7 @@ type GomahawkServer interface {
 	ListenTo(ip net.IP, port int) error
 	// start the listening and advertising
 	Start() error
+	Stop() error
 	// says to advertise this instance
 	// (this is regardless of advertisement period set by AdvertEvery)
 	Advertise() error

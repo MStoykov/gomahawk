@@ -128,6 +128,16 @@ func (g *gomahawkServerImpl) AdvertiseEvery(seconds int) {
 	}
 }
 
+func (g *gomahawkServerImpl) Stop() (err error) {
+  for _, advertiser := range g.advertisers {
+      advertiser.Stop()
+    }
+  for _, listener := range g.listeners {
+      listener.Close()
+    }
+  return g.connectionManager.Stop()
+}
+
 func (g *gomahawkServerImpl) Start() (err error) {
 	log.Printf("%s.Start()", g)
 	for _, advertiser := range g.advertisers {

@@ -51,3 +51,12 @@ func (cm *connectionManager) registerConnection(tcpConn *net.TCPConn) (conn *con
 	cm.connections[conn] = tcpConn
 	return conn
 }
+
+func (cm *connectionManager) Stop() error {
+  for conn, tcpConn := range cm.connections {
+    conn.Close()
+    tcpConn.Close()  
+  }  
+  
+  return nil // return an error 
+}
